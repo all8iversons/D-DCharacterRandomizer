@@ -110,7 +110,7 @@ describe("exportService", () => {
     });
   });
 
-  it("fills all three pages of the bundled fillable template", async () => {
+  it("fills all six pages of the bundled fillable template", async () => {
     const template = new Uint8Array(
       readFileSync("assets/character-sheet-template.pdf"),
     );
@@ -118,15 +118,18 @@ describe("exportService", () => {
     const pdf = await PDFDocument.load(result);
     const form = pdf.getForm();
 
-    expect(pdf.getPageCount()).toBe(3);
+    expect(pdf.getPageCount()).toBe(6);
     expect(form.getTextField("identity.name").getText()).toBe("Synthetic Hero");
     expect(form.getTextField("stats.hp").getText()).toBe("33");
     expect(form.getTextField("identity.appearance").getText()).toBe(
       "Synthetic appearance.",
     );
-    expect(form.getTextField("spellcasting.known").getText()).toContain(
+    expect(form.getTextField("spells.level2").getText()).toContain(
       "Sample Spell",
     );
+    expect(form.getTextField("skill.prc").getText()).toBe("P +3");
+    expect(form.getTextField("passive.perception").getText()).toBe("13");
+    expect(form.getTextField("mod.strength").getText()).toBe("+2");
     expect(form.getFields()).toHaveLength(pdfTemplateFieldNames().length);
   });
 

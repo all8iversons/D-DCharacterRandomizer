@@ -1,4 +1,4 @@
-# D&D Beyond Character Shuffler
+﻿# D&D Beyond Character Shuffler
 
 Foundry VTT v12 module for shuffling D&D Beyond character components into
 hybrid characters, creating native Actors, and exporting fillable PDFs and
@@ -21,7 +21,7 @@ authorized sample. Character mapping, shuffling, calculations, Actor data
 construction, and export services have synthetic unit tests; live Foundry v12
 integration validation is still required.
 
-The three-page PDF is an original fillable template distributed under CC0-1.0,
+The six-page PDF (D&D Beyond-style layout: main sheet, features, equipment, details and spells) is an original fillable template distributed under CC0-1.0,
 not an official D&D/Wizards of the Coast sheet. Its license notice is in
 `assets/character-sheet-template-license.txt`.
 
