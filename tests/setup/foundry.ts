@@ -43,18 +43,27 @@ Object.defineProperty(globalThis, "foundry", {
     applications: {
       api: {},
     },
-    config: {
-      Actor: {
-        documentClass: {
-          createDocuments: vi.fn(),
-        },
-      },
-      Folder: {
-        documentClass: {
-          create: vi.fn(),
-        },
+  },
+});
+
+Object.defineProperty(globalThis, "CONFIG", {
+  configurable: true,
+  value: {
+    Actor: {
+      documentClass: {
+        createDocuments: vi.fn(),
       },
     },
-    fromUuid: vi.fn(async () => null),
+    Folder: {
+      documentClass: {
+        create: vi.fn(),
+      },
+    },
   },
+});
+
+Object.defineProperty(globalThis, "fromUuid", {
+  configurable: true,
+  writable: true,
+  value: vi.fn(async () => null),
 });

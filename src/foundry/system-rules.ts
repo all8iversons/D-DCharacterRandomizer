@@ -150,7 +150,7 @@ async function findUnarmoredDefense(
   const advancementUuids = new Set<string>();
   collectCompendiumUuids(system.advancement, advancementUuids);
   for (const uuid of advancementUuids) {
-    const feature = await foundry.fromUuid(uuid);
+    const feature = await fromUuid(uuid);
     if (feature) {
       const rule = featureUnarmoredDefense(feature);
       if (rule) {

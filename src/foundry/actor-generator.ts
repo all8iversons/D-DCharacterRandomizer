@@ -472,7 +472,7 @@ export async function createActorsFromShuffle(
       candidate.type === "Actor",
   );
   if (!folder) {
-    folder = await foundry.config.Folder.documentClass.create({
+    folder = await CONFIG.Folder.documentClass.create({
       name: "Shuffled Characters",
       type: "Actor",
     });
@@ -487,7 +487,7 @@ export async function createActorsFromShuffle(
     folder: folder.id,
   }));
   const actors =
-    await foundry.config.Actor.documentClass.createDocuments(actorData);
+    await CONFIG.Actor.documentClass.createDocuments(actorData);
   if (actors.length !== shuffled.length) {
     throw new Error(
       `Foundry created ${actors.length} of ${shuffled.length} requested Actors.`,

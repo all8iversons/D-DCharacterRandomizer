@@ -102,7 +102,7 @@ describe("resolveSystemRules", () => {
         getDocument: vi.fn(async () => item),
       },
     ];
-    foundry.fromUuid = vi.fn(async () => ({
+    globalThis.fromUuid = vi.fn(async () => ({
       id: "unarmored",
       name: "Unarmored Defense",
       type: "feat",

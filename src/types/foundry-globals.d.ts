@@ -163,10 +163,10 @@ interface FoundryApplications {
 
 interface FoundryGlobal {
   applications: FoundryApplications;
-  config: FoundryConfig;
-  fromUuid(uuid: string): Promise<FoundryItemDocument | null>;
 }
 
 declare const game: FoundryGame;
 declare const Hooks: FoundryHooks;
 declare const foundry: FoundryGlobal;
+declare const CONFIG: FoundryConfig;
+declare function fromUuid(uuid: string): Promise<FoundryItemDocument | null>;

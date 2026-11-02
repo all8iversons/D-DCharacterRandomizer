@@ -98,10 +98,10 @@ describe("createShuffledActors", () => {
           toObject: () => structuredClone(data),
         })),
       );
-    foundry.config.Folder.documentClass.create =
-      createFolder as typeof foundry.config.Folder.documentClass.create;
-    foundry.config.Actor.documentClass.createDocuments =
-      createDocuments as typeof foundry.config.Actor.documentClass.createDocuments;
+    CONFIG.Folder.documentClass.create =
+      createFolder as typeof CONFIG.Folder.documentClass.create;
+    CONFIG.Actor.documentClass.createDocuments =
+      createDocuments as typeof CONFIG.Actor.documentClass.createDocuments;
   });
 
   it("preflights the whole batch and creates new Actors in the dedicated folder", async () => {
@@ -126,7 +126,7 @@ describe("createShuffledActors", () => {
       "folder-1",
     ]);
     expect(result.actors[0]?.name).toContain("(Shuffled");
-    const createDocuments = foundry.config.Actor.documentClass
+    const createDocuments = CONFIG.Actor.documentClass
       .createDocuments as ReturnType<typeof vi.fn>;
     expect(createDocuments).toHaveBeenCalledOnce();
     expect(createDocuments.mock.calls[0]?.[0]).toHaveLength(2);
@@ -141,7 +141,7 @@ describe("createShuffledActors", () => {
     await expect(createShuffledActors(characters(), () => 0.5)).rejects.toThrow(
       /No D&D 5e compendium class matches/,
     );
-    expect(foundry.config.Actor.documentClass.createDocuments).not.toHaveBeenCalled();
-    expect(foundry.config.Folder.documentClass.create).not.toHaveBeenCalled();
+    expect(CONFIG.Actor.documentClass.createDocuments).not.toHaveBeenCalled();
+    expect(CONFIG.Folder.documentClass.create).not.toHaveBeenCalled();
   });
 });
