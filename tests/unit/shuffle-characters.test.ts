@@ -96,18 +96,15 @@ describe("shuffleCharacters", () => {
     }
   });
 
-  it("gives caster spell lists to hybrids whose class came from a caster", () => {
-    for (let run = 0; run < 30; run += 1) {
-      const source = characters();
-      source.forEach((character, index) => {
-        character.slices.spellcasting.spellSlots =
-          index < 2 ? [{ level: 1, count: 2 }] : [];
-      });
-      const result = shuffleCharacters(source);
-      for (const hybrid of result) {
-        const classIsCaster = hybrid.origins.classProgression.sourceIndex < 2;
-        const listIsCaster = hybrid.origins.spellcasting.sourceIndex < 2;
-        expect(listIsCaster).toBe(classIsCaster);
+  it("never gives a hybrid its own spell list, at any party size", () => {
+    const pool = characters();
+    for (const size of [2, 3, 4, 5, 6, 7, 8]) {
+      const source = Array.from({ length: size }, (_, index) => pool[index % 4]!);
+      for (let run = 0; run < 50; run += 1) {
+        const result = shuffleCharacters(source);
+        result.forEach((hybrid, index) => {
+          expect(hybrid.origins.spellcasting.sourceIndex).not.toBe(index);
+        });
       }
     }
   });
