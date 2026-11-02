@@ -903,13 +903,35 @@ function readSpells(
   const knownSpells: SpellEntry[] = [];
   const preparedSpells: SpellEntry[] = [];
 
-  for (const group of ["background", "class", "feat", "item", "race"]) {
-    const entries = optionalArray(
-      spells?.[group],
+  const classSpellGroups = optionalArray(
+    data.classSpells,
+    sourceCharacterId,
+    "D&D Beyond returned malformed spell data.",
+  ).flatMap((rawGroup) =>
+    optionalArray(
+      requiredRecord(
+        rawGroup,
+        sourceCharacterId,
+        "D&D Beyond returned malformed spell data.",
+      ).spells,
       sourceCharacterId,
       "D&D Beyond returned malformed spell data.",
-    );
-    for (const rawSpell of entries) {
+    ),
+  );
+  const spellSources: unknown[] = [
+    ...["background", "class", "feat", "item", "race"].flatMap((group) =>
+      optionalArray(
+        spells?.[group],
+        sourceCharacterId,
+        "D&D Beyond returned malformed spell data.",
+      ),
+    ),
+    ...classSpellGroups,
+  ];
+  const seenSpells = new Set<string>();
+
+  {
+    for (const rawSpell of spellSources) {
       const spell = requiredRecord(
         rawSpell,
         sourceCharacterId,
@@ -944,6 +966,10 @@ function readSpells(
             }
           : {}),
       };
+      if (seenSpells.has(`${entry.id ?? ""}:${entry.name.toLowerCase()}`)) {
+        continue;
+      }
+      seenSpells.add(`${entry.id ?? ""}:${entry.name.toLowerCase()}`);
       if (level === 0) {
         cantrips.push(entry);
       } else {
