@@ -1,0 +1,135 @@
+<div class="ddb-importer">
+  <section class="form-group">
+    <label for="ddb-character-source">Character ID or URL</label>
+    <div class="form-fields">
+      <input id="ddb-character-source" name="character-source" type="text" placeholder="https://www.dndbeyond.com/characters/123456" {{#if importing}}disabled{{/if}}>
+      <button type="button" data-action="import-character" {{#if importing}}disabled{{/if}}>
+        <i class="fa-solid fa-download"></i> Import Character
+      </button>
+    </div>
+  </section>
+
+  <section class="form-group">
+    <label for="ddb-campaign-source">Campaign URL</label>
+    <div class="form-fields">
+      <input id="ddb-campaign-source" name="campaign-source" type="text" placeholder="https://www.dndbeyond.com/campaigns/123456" {{#if importing}}disabled{{/if}}>
+      <button type="button" data-action="import-campaign" {{#if importing}}disabled{{/if}}>
+        <i class="fa-solid fa-users"></i> Check Campaign
+      </button>
+    </div>
+    <p class="hint">Campaign import remains unavailable until its roster response format is verified.</p>
+  </section>
+
+  {{#if statusMessage}}
+    <p role="status">{{statusMessage}}</p>
+  {{/if}}
+  {{#if errorMessage}}
+    <p class="notification error" role="alert">{{errorMessage}}</p>
+  {{/if}}
+
+  {{#if hasShufflePreview}}
+    <section class="shuffle-preview">
+      <h3>Shuffle Preview ({{shuffledPreview.length}} hybrids)</h3>
+      <p>Each of the six slices comes from a different source character. Review this preview before creating new Actors.</p>
+      {{#each shuffledPreview as |character|}}
+        <details>
+          <summary>{{character.name}} — {{character.slices.classProgression.className}} level {{character.slices.classProgression.totalLevel}}</summary>
+          <p>Identity: source {{character.origins.identityBackground.sourceCharacterId}}</p>
+          <p>Class: source {{character.origins.classProgression.sourceCharacterId}}</p>
+          <p>Ability scores: source {{character.origins.coreAbilityScores.sourceCharacterId}}</p>
+          <p>Proficiencies and feats: source {{character.origins.proficienciesAndFeats.sourceCharacterId}}</p>
+          <p>Equipment: source {{character.origins.equipmentAndGold.sourceCharacterId}}</p>
+          <p>Spellcasting: source {{character.origins.spellcasting.sourceCharacterId}}</p>
+        </details>
+      {{/each}}
+      <button type="button" data-action="create-actors" {{#if importing}}disabled{{/if}}>
+        <i class="fa-solid fa-user-plus"></i> Create Shuffled Actors
+      </button>
+      <p class="hint">Actor generation validates all class and armor rules before creating any Actors.</p>
+    </section>
+  {{/if}}
+
+  <section class="imported-characters">
+    <h3>Loaded Characters ({{characterCount}})</h3>
+    {{#if characters.length}}
+      {{#each characters as |character|}}
+        <details>
+          <summary>{{character.name}} (ID {{character.sourceCharacterId}})</summary>
+          <h4>Identity &amp; Background</h4>
+          <p>{{character.slices.identityBackground.species}} &middot; {{character.slices.identityBackground.background}} &middot; {{character.slices.identityBackground.alignment}}</p>
+          <p>{{character.slices.identityBackground.appearance}}</p>
+          <h4>Class &amp; Progression</h4>
+          <p>{{character.slices.classProgression.className}} {{character.slices.classProgression.subclass}} &middot; Level {{character.slices.classProgression.totalLevel}} &middot; {{character.slices.classProgression.hitDice}}</p>
+          <h4>Core Ability Scores</h4>
+          <p>STR {{character.slices.coreAbilityScores.strength}} &middot; DEX {{character.slices.coreAbilityScores.dexterity}} &middot; CON {{character.slices.coreAbilityScores.constitution}} &middot; INT {{character.slices.coreAbilityScores.intelligence}} &middot; WIS {{character.slices.coreAbilityScores.wisdom}} &middot; CHA {{character.slices.coreAbilityScores.charisma}}</p>
+          <h4>Proficiencies &amp; Feats</h4>
+          <p>Skills: {{#each character.slices.proficienciesAndFeats.skills as |entry|}}{{entry.name}}{{#unless @last}}, {{/unless}}{{/each}}</p>
+          <p>Saving throws: {{#each character.slices.proficienciesAndFeats.savingThrows as |entry|}}{{entry.name}}{{#unless @last}}, {{/unless}}{{/each}}</p>
+          <p>Languages: {{#each character.slices.proficienciesAndFeats.languages as |entry|}}{{entry.name}}{{#unless @last}}, {{/unless}}{{/each}}</p>
+          <p>Tools: {{#each character.slices.proficienciesAndFeats.tools as |entry|}}{{entry.name}}{{#unless @last}}, {{/unless}}{{/each}}</p>
+          <p>Armor: {{#each character.slices.proficienciesAndFeats.armor as |entry|}}{{entry.name}}{{#unless @last}}, {{/unless}}{{/each}}</p>
+          <p>Weapons: {{#each character.slices.proficienciesAndFeats.weapons as |entry|}}{{entry.name}}{{#unless @last}}, {{/unless}}{{/each}}</p>
+          <p>Feats: {{#each character.slices.proficienciesAndFeats.feats as |entry|}}{{entry.name}}{{#unless @last}}, {{/unless}}{{/each}}</p>
+          <p>Senses: {{#each character.slices.proficienciesAndFeats.senses as |entry|}}{{entry.name}}{{#unless @last}}, {{/unless}}{{/each}}</p>
+          <h4>Equipment &amp; Gold</h4>
+          <p>Weapons: {{#each character.slices.equipmentAndGold.weapons as |item|}}{{item.name}}{{#unless @last}}, {{/unless}}{{/each}}</p>
+          <p>Armor: {{#each character.slices.equipmentAndGold.armor as |item|}}{{item.name}}{{#unless @last}}, {{/unless}}{{/each}}</p>
+          <p>Magic items: {{#each character.slices.equipmentAndGold.magicItems as |item|}}{{item.name}}{{#unless @last}}, {{/unless}}{{/each}}</p>
+          <p>Other gear: {{#each character.slices.equipmentAndGold.otherItems as |item|}}{{item.name}}{{#unless @last}}, {{/unless}}{{/each}}</p>
+          <p>Attuned: {{#each character.slices.equipmentAndGold.attunedItems as |item|}}{{item.name}}{{#unless @last}}, {{/unless}}{{/each}}</p>
+          <p>GP {{character.slices.equipmentAndGold.currency.gold}} &middot; SP {{character.slices.equipmentAndGold.currency.silver}} &middot; CP {{character.slices.equipmentAndGold.currency.copper}}</p>
+          <h4>Spellcasting</h4>
+          <p>Cantrips: {{#each character.slices.spellcasting.cantrips as |spell|}}{{spell.name}}{{#unless @last}}, {{/unless}}{{/each}}</p>
+          <p>Known spells: {{#each character.slices.spellcasting.knownSpells as |spell|}}{{spell.name}}{{#unless @last}}, {{/unless}}{{/each}}</p>
+          <p>Prepared spells: {{#each character.slices.spellcasting.preparedSpells as |spell|}}{{spell.name}}{{#unless @last}}, {{/unless}}{{/each}}</p>
+          <p>Spell slots: {{#each character.slices.spellcasting.spellSlots as |slot|}}Level {{slot.level}}: {{slot.count}}{{#unless @last}}; {{/unless}}{{/each}}</p>
+        </details>
+      {{/each}}
+    {{else}}
+      <p>No characters loaded yet. Imports remain in memory for this client session only.</p>
+    {{/if}}
+  </section>
+
+  {{#if generatedActors.length}}
+    <section class="generated-actors">
+      <h3>Generated Actors ({{generatedActors.length}})</h3>
+      <button type="button" data-action="export-json-batch">
+        <i class="fa-solid fa-file-zipper"></i> Download All Foundry JSON
+      </button>
+      {{#each generatedActors as |actor|}}
+        <div class="form-group">
+          <span>{{actor.name}}</span>
+          <div class="form-fields">
+            <button type="button" data-action="export-json" data-actor-id="{{actor.id}}">
+              <i class="fa-solid fa-file-code"></i> Foundry JSON
+            </button>
+            <button type="button" data-action="export-pdf" data-actor-id="{{actor.id}}">
+              <i class="fa-solid fa-file-pdf"></i> Fillable PDF
+            </button>
+          </div>
+        </div>
+      {{/each}}
+    </section>
+  {{/if}}
+  {{#if generationWarnings.length}}
+    <section class="generation-warnings">
+      <h3>Items Requiring Review</h3>
+      <ul>
+        {{#each generationWarnings as |warning|}}
+          <li>{{warning}}</li>
+        {{/each}}
+      </ul>
+    </section>
+  {{/if}}
+
+  <footer class="form-footer">
+    <button type="button" data-action="shuffle-preview" {{#unless canShuffle}}disabled{{/unless}}>
+      <i class="fa-solid fa-shuffle"></i> Shuffle Characters
+    </button>
+    {{#unless canShuffle}}
+      <p class="hint">Import at least two valid characters to enable the shuffle control.</p>
+    {{else}}
+      <p class="hint">Review a shuffle preview, then create the hybrid Actors. Existing Actors are never overwritten.</p>
+    {{/unless}}
+  </footer>
+</div>

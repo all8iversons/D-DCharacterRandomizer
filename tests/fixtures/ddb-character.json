@@ -1,0 +1,344 @@
+{
+  "success": true,
+  "data": {
+    "id": 1000000,
+    "name": "Sample Character",
+    "age": 30,
+    "gender": "",
+    "faith": "",
+    "alignmentId": 5,
+    "race": {
+      "fullName": "Sample Species",
+      "baseName": "Sample Species",
+      "description": "Synthetic species description.",
+      "size": null
+    },
+    "background": {
+      "definition": {
+        "name": "Sample Background",
+        "description": "Synthetic background description.",
+        "featureName": "Sample Feature",
+        "featureDescription": "Synthetic feature description."
+      }
+    },
+    "stats": [
+      {
+        "id": 1,
+        "name": null,
+        "value": 15
+      },
+      {
+        "id": 2,
+        "name": null,
+        "value": 14
+      },
+      {
+        "id": 3,
+        "name": null,
+        "value": 13
+      },
+      {
+        "id": 4,
+        "name": null,
+        "value": 12
+      },
+      {
+        "id": 5,
+        "name": null,
+        "value": 10
+      },
+      {
+        "id": 6,
+        "name": null,
+        "value": 8
+      }
+    ],
+    "classes": [
+      {
+        "id": 1000010,
+        "level": 5,
+        "hitDiceUsed": 0,
+        "definition": {
+          "name": "Sample Class",
+          "hitDice": 8
+        },
+        "subclassDefinition": {
+          "name": "Sample Subclass"
+        }
+      }
+    ],
+    "traits": {
+      "personalityTraits": "Synthetic personality.",
+      "ideals": "Synthetic ideal.",
+      "bonds": "Synthetic bond.",
+      "flaws": "Synthetic flaw.",
+      "appearance": "Synthetic appearance."
+    },
+    "notes": {
+      "allies": "",
+      "personalPossessions": "",
+      "otherHoldings": "",
+      "organizations": "",
+      "enemies": "",
+      "backstory": "Synthetic backstory.",
+      "otherNotes": ""
+    },
+    "inventory": [
+      {
+        "id": 1000011,
+        "quantity": 1,
+        "equipped": true,
+        "isAttuned": false,
+        "definition": {
+          "filterType": "Weapon",
+          "name": "Sample Weapon",
+          "description": "Synthetic item description.",
+          "armorClass": null,
+          "armorTypeId": null,
+          "damage": "1d8",
+          "damageType": "slashing",
+          "weight": 2,
+          "cost": 10,
+          "properties": [],
+          "baseArmorName": null,
+          "isConsumable": false,
+          "canAttune": false
+        }
+      },
+      {
+        "id": 1000012,
+        "quantity": 1,
+        "equipped": true,
+        "isAttuned": false,
+        "definition": {
+          "filterType": "Armor",
+          "name": "Sample Armor",
+          "description": "Synthetic item description.",
+          "armorClass": 14,
+          "armorTypeId": 1,
+          "damage": null,
+          "damageType": null,
+          "weight": 2,
+          "cost": 10,
+          "properties": [],
+          "baseArmorName": null,
+          "isConsumable": false,
+          "canAttune": false
+        }
+      },
+      {
+        "id": 1000013,
+        "quantity": 1,
+        "equipped": false,
+        "isAttuned": true,
+        "definition": {
+          "filterType": "Wondrous item",
+          "name": "Sample Magic Item",
+          "description": "Synthetic item description.",
+          "armorClass": null,
+          "armorTypeId": null,
+          "damage": null,
+          "damageType": null,
+          "weight": 2,
+          "cost": 10,
+          "properties": [],
+          "baseArmorName": null,
+          "isConsumable": false,
+          "canAttune": true
+        }
+      },
+      {
+        "id": 1000016,
+        "quantity": 1,
+        "equipped": false,
+        "isAttuned": false,
+        "definition": {
+          "filterType": "Other Gear",
+          "name": "Sample Gear",
+          "description": "Synthetic item description.",
+          "armorClass": null,
+          "armorTypeId": null,
+          "damage": null,
+          "damageType": null,
+          "weight": 1,
+          "cost": 5,
+          "properties": null,
+          "baseArmorName": null,
+          "isConsumable": false,
+          "canAttune": false
+        }
+      }
+    ],
+    "currencies": {
+      "cp": 1,
+      "sp": 2,
+      "gp": 25,
+      "ep": 0,
+      "pp": 1
+    },
+    "spells": {
+      "race": [],
+      "class": [
+        {
+          "id": 1000014,
+          "prepared": true,
+          "alwaysPrepared": false,
+          "countsAsKnownSpell": true,
+          "definition": {
+            "name": "Sample Cantrip",
+            "level": 0,
+            "school": "evocation",
+            "description": "Synthetic spell description.",
+            "ritual": false
+          }
+        },
+        {
+          "id": 1000015,
+          "prepared": true,
+          "alwaysPrepared": false,
+          "countsAsKnownSpell": true,
+          "definition": {
+            "name": "Sample Spell",
+            "level": 2,
+            "school": "evocation",
+            "description": "Synthetic spell description.",
+            "ritual": false
+          }
+        }
+      ],
+      "background": [],
+      "item": [],
+      "feat": []
+    },
+    "spellSlots": [
+      {
+        "level": 1,
+        "used": 0,
+        "available": 4
+      },
+      {
+        "level": 2,
+        "used": 0,
+        "available": 2
+      },
+      {
+        "level": 3,
+        "used": 0,
+        "available": 0
+      },
+      {
+        "level": 4,
+        "used": 0,
+        "available": 0
+      },
+      {
+        "level": 5,
+        "used": 0,
+        "available": 0
+      },
+      {
+        "level": 6,
+        "used": 0,
+        "available": 0
+      },
+      {
+        "level": 7,
+        "used": 0,
+        "available": 0
+      },
+      {
+        "level": 8,
+        "used": 0,
+        "available": 0
+      },
+      {
+        "level": 9,
+        "used": 0,
+        "available": 0
+      }
+    ],
+    "modifiers": {
+      "race": [
+        {
+          "type": "language",
+          "subType": "common",
+          "friendlySubtypeName": "Common",
+          "friendlyTypeName": "Language",
+          "value": null,
+          "statId": null,
+          "isGranted": true
+        },
+        {
+          "type": "bonus",
+          "subType": "darkvision",
+          "friendlySubtypeName": "Darkvision",
+          "friendlyTypeName": "Sense",
+          "value": 60,
+          "statId": null,
+          "isGranted": true
+        }
+      ],
+      "class": [
+        {
+          "type": "proficiency",
+          "subType": "perception",
+          "friendlySubtypeName": "Perception",
+          "friendlyTypeName": "Skill",
+          "value": null,
+          "statId": null,
+          "isGranted": true
+        },
+        {
+          "type": "proficiency",
+          "subType": "wisdom-saving-throws",
+          "friendlySubtypeName": "Wisdom Saving Throws",
+          "friendlyTypeName": "Saving Throw",
+          "value": null,
+          "statId": null,
+          "isGranted": true
+        },
+        {
+          "type": "proficiency",
+          "subType": "thieves-tools",
+          "friendlySubtypeName": "Thieves Tools",
+          "friendlyTypeName": "Tool",
+          "value": null,
+          "statId": null,
+          "isGranted": true
+        },
+        {
+          "type": "proficiency",
+          "subType": "light-armor",
+          "friendlySubtypeName": "Light Armor",
+          "friendlyTypeName": "Armor",
+          "value": null,
+          "statId": null,
+          "isGranted": true
+        },
+        {
+          "type": "proficiency",
+          "subType": "simple-weapons",
+          "friendlySubtypeName": "Simple Weapons",
+          "friendlyTypeName": "Weapon",
+          "value": null,
+          "statId": null,
+          "isGranted": true
+        }
+      ],
+      "background": [],
+      "feat": [],
+      "item": [],
+      "condition": []
+    },
+    "feats": [
+      {
+        "definition": {
+          "name": "Sample Feat",
+          "description": "Synthetic feat description."
+        }
+      }
+    ],
+    "customProficiencies": [],
+    "customSenses": []
+  }
+}

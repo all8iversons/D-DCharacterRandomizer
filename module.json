@@ -1,0 +1,16 @@
+{
+  "id": "d-d-character-randomizer",
+  "title": "D&D Beyond Character Shuffler",
+  "description": "Import D&D Beyond characters for Foundry VTT.",
+  "version": "0.1.0",
+  "compatibility": {
+    "minimum": "12",
+    "verified": "12"
+  },
+  "systems": [
+    "dnd5e"
+  ],
+  "esmodules": [
+    "dist/module.js"
+  ]
+}
