@@ -119,11 +119,26 @@ function customLootItem(
   };
 }
 
+async function findOptionalItem(
+  name: string,
+  expectedTypes: readonly string[],
+): Promise<FoundryItemDocument | null> {
+  try {
+    return await findSystemItem(name, expectedTypes);
+  } catch (error) {
+    // Ambiguous non-class entries fall back to custom items instead of aborting the batch.
+    if (error instanceof RulesResolutionError) {
+      return null;
+    }
+    throw error;
+  }
+}
+
 async function equipmentItem(
   entry: EquipmentEntry,
   warnings: string[],
 ): Promise<JsonRecord> {
-  const item = await findSystemItem(
+  const item = await findOptionalItem(
     entry.name,
     entry.category.toLowerCase().includes("weapon")
       ? ["weapon"]
@@ -144,7 +159,7 @@ async function spellItem(
   entry: SpellEntry,
   warnings: string[],
 ): Promise<JsonRecord> {
-  const item = await findSystemItem(entry.name, ["spell"]);
+  const item = await findOptionalItem(entry.name, ["spell"]);
   if (item) {
     const data = cloneCompendiumItem(item);
     const system = getSystemRecord(data);
@@ -177,7 +192,7 @@ async function featureItem(
   expectedTypes: readonly string[],
   warnings: string[],
 ): Promise<JsonRecord> {
-  const item = await findSystemItem(name, expectedTypes);
+  const item = await findOptionalItem(name, expectedTypes);
   if (item) {
     return cloneCompendiumItem(item);
   }

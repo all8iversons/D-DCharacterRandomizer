@@ -264,6 +264,10 @@ function getOptionalText(
   return textValue(record?.[key], sourceCharacterId, message);
 }
 
+function optionalDescriptionText(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
 function humanize(value: string): string {
   return value
     .split(/[-_ ]+/)
@@ -732,16 +736,8 @@ function toEquipmentEntry(
             0,
             100,
           ),
-    damage: textValue(
-      definition.damage,
-      sourceCharacterId,
-      "D&D Beyond returned invalid weapon data.",
-    ),
-    damageType: textValue(
-      definition.damageType,
-      sourceCharacterId,
-      "D&D Beyond returned invalid weapon data.",
-    ),
+    damage: optionalDescriptionText(definition.damage),
+    damageType: optionalDescriptionText(definition.damageType),
     weight: optionalNumber(
       definition.weight,
       sourceCharacterId,

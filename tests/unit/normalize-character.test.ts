@@ -120,6 +120,29 @@ describe("normalizeCharacterPayload", () => {
     expect(asRecord(before).data).not.toEqual(data);
   });
 
+  it("preserves weapon names when optional damage metadata uses an unknown shape", () => {
+    const payload = readFixture();
+    const data = asRecord(asRecord(payload).data);
+    const inventory = data.inventory;
+    if (!Array.isArray(inventory)) {
+      throw new Error("Expected fixture inventory");
+    }
+    const weapon = asRecord(inventory[0]);
+    const definition = asRecord(weapon.definition);
+    definition.damage = { diceString: "1d8" };
+    definition.damageType = { name: "slashing" };
+
+    const character = sliceCharacter(
+      normalizeCharacterPayload(payload, "12345"),
+    );
+
+    expect(character.slices.equipmentAndGold.weapons[0]).toMatchObject({
+      name: "Sample Weapon",
+      damage: "",
+      damageType: "",
+    });
+  });
+
   it("rejects incomplete ability scores without exposing payload content", () => {
     const payload = readFixture();
     const root = asRecord(payload);

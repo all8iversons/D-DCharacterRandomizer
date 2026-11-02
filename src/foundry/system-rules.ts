@@ -237,6 +237,20 @@ export async function findSystemItem(
   }
 
   if (matches.length > 1) {
+    // dnd5e ships 2014 and 2024 versions of the same entries; prefer the current rules.
+    const rulesOf = (item: FoundryItemDocument): string => {
+      const system: unknown = item.system;
+      const source = isRecord(system) ? system.source : null;
+      return isRecord(source) && typeof source.rules === "string"
+        ? source.rules
+        : "";
+    };
+    for (const rules of ["2024", "2014"]) {
+      const preferred = matches.filter((match) => rulesOf(match) === rules);
+      if (preferred.length === 1) {
+        return preferred[0] ?? null;
+      }
+    }
     throw new RulesResolutionError(
       `More than one D&D 5e compendium entry matches ${name}.`,
     );
