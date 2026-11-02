@@ -259,6 +259,7 @@ export class DdbImporterApplication extends HandlebarsApplication {
     if (error instanceof RangeError) {
       return error.message;
     }
+    console.error("D&D Beyond Character Shuffler operation failed", error);
     return "The requested operation could not be completed. Check the proxy and D&D 5e system configuration, then try again.";
   }
 }
