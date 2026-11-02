@@ -37,6 +37,12 @@ function mapProxyError(code: string): SafeProxyError {
         message: "D&D Beyond temporarily limited requests. Wait before trying again.",
         retryable: true,
       };
+    case "invalid-roster-response":
+      return {
+        category: "invalid-payload",
+        message: "D&D Beyond returned an unexpected campaign roster response.",
+        retryable: false,
+      };
     case "roster-unverified":
       return {
         category: "roster-unverified",
@@ -107,7 +113,7 @@ function getProxyConfig(): { url: URL; token: string; cobaltSession: string } {
 }
 
 async function postImport<TBody extends CharacterRequest>(
-  route: "character",
+  route: "character" | "campaign",
   body: TBody,
 ): Promise<unknown> {
   const config = getProxyConfig();
@@ -195,13 +201,23 @@ export async function fetchCharacterPayload(
 }
 
 export async function fetchCampaignPayload(
-  _campaignId: string,
-): Promise<never> {
-  throw new ImportFailure({
-    category: "roster-unverified",
-    message:
-      "Campaign roster import is unavailable until the D&D Beyond response format is verified.",
-    sourceCharacterId: null,
-    retryable: false,
-  });
+  campaignId: string,
+): Promise<string[]> {
+  const result = await postImport("campaign", { id: campaignId });
+  const ids =
+    typeof result === "object" && result !== null && "characterIds" in result
+      ? result.characterIds
+      : undefined;
+  if (
+    !Array.isArray(ids) ||
+    !ids.every((id): id is string => typeof id === "string" && /^[1-9]\d{0,15}$/.test(id))
+  ) {
+    throw new ImportFailure({
+      category: "invalid-payload",
+      message: "The proxy returned an invalid campaign roster.",
+      sourceCharacterId: null,
+      retryable: false,
+    });
+  }
+  return ids;
 }

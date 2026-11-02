@@ -24,6 +24,6 @@ export async function fetchCharacter(
   return payload;
 }
 
-export function fetchCampaign(campaignId: string): Promise<never> {
+export function fetchCampaign(campaignId: string): Promise<string[]> {
   return fetchCampaignPayload(campaignId);
 }

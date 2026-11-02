@@ -15,9 +15,10 @@ D&D 5e system, and preflights the full batch before creating new Actors in the
 fillable PDF or Foundry JSON, and all Actors can be downloaded together as a
 ZIP containing individual JSON files.
 
-The D&D Beyond services are unofficial and undocumented. Campaign import
-remains fail-closed until its roster response shape is verified against an
-authorized sample. Character mapping, shuffling, calculations, Actor data
+The D&D Beyond services are unofficial and undocumented. Campaign import uses
+the community roster endpoint (`/api/campaign/stt/active-short-characters/<id>`)
+through the proxy, then imports each character; it needs the updated proxy and
+has not yet been verified against a live campaign. Character mapping, shuffling, calculations, Actor data
 construction, and export services have synthetic unit tests; live Foundry v12
 integration validation is still required.
 

@@ -128,11 +128,34 @@ describe("self-hosted remote transport", () => {
     expect(failure.details.message).not.toContain("upstream response");
   });
 
-  it("fails closed for campaign import without sending credentials", async () => {
-    await expect(fetchCampaignPayload("456")).rejects.toMatchObject({
-      details: { category: "roster-unverified" },
+  it("fetches the campaign roster through the proxy", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(JSON.stringify({ characterIds: ["11", "22"] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    await expect(fetchCampaignPayload("456")).resolves.toEqual(["11", "22"]);
+    const [url, init] = vi.mocked(fetch).mock.calls[0] ?? [];
+    expect(String(url)).toBe("https://localhost:8787/api/import/campaign");
+    expect(JSON.parse(String(init?.body))).toEqual({
+      id: "456",
+      cobaltSession: "test-session-cookie",
     });
-    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("rejects a malformed campaign roster", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(JSON.stringify({ characterIds: ["abc"] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    await expect(fetchCampaignPayload("456")).rejects.toMatchObject({
+      details: { category: "invalid-payload" },
+    });
   });
 
   it("registers proxy and credential settings as client-scoped", async () => {

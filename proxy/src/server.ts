@@ -6,6 +6,8 @@ import { isIP } from "node:net";
 
 const CHARACTER_HOST =
   "https://character-service.dndbeyond.com/character/v5/character";
+const CAMPAIGN_HOST =
+  "https://www.dndbeyond.com/api/campaign/stt/active-short-characters";
 const AUTH_URL = "https://auth-service.dndbeyond.com/v1/cobalt-token";
 const MAX_BODY_BYTES = 16 * 1024;
 const REQUEST_TIMEOUT_MS = 15_000;
@@ -319,6 +321,92 @@ async function getCharacter(
   return payload.data;
 }
 
+function readRosterIds(payload: unknown): string[] {
+  const list =
+    typeof payload === "object" && payload !== null && "data" in payload
+      ? payload.data
+      : undefined;
+  if (!Array.isArray(list)) {
+    throw new ProxyError(
+      502,
+      "invalid-roster-response",
+      "D&D Beyond returned an unexpected campaign roster response.",
+    );
+  }
+  const ids = new Set<string>();
+  for (const entry of list as unknown[]) {
+    if (typeof entry !== "object" || entry === null) {
+      continue;
+    }
+    const record = entry as Record<string, unknown>;
+    const raw = record.characterId ?? record.id;
+    const id =
+      typeof raw === "number" || typeof raw === "string" ? String(raw) : "";
+    if (/^[1-9]\d{0,15}$/.test(id)) {
+      ids.add(id);
+    }
+  }
+  return [...ids];
+}
+
+async function getCampaignCharacterIds(
+  id: string,
+  cobaltSession: string,
+): Promise<string[]> {
+  const bearer = await getBearerToken(cobaltSession);
+  let response: Response;
+  try {
+    response = await fetchWithTimeout(
+      `${CAMPAIGN_HOST}/${encodeURIComponent(id)}`,
+      {
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${bearer}`,
+          Cookie: `CobaltSession=${cobaltSession}`,
+        },
+      },
+    );
+  } catch {
+    throw new ProxyError(
+      502,
+      "campaign-service-unavailable",
+      "D&D Beyond campaign data could not be reached. Try again later.",
+    );
+  }
+  if (response.status === 401 || response.status === 403 || response.status === 404) {
+    throw new ProxyError(
+      403,
+      "campaign-unavailable",
+      "This campaign is unavailable to the current D&D Beyond session.",
+    );
+  }
+  if (response.status === 429) {
+    throw new ProxyError(
+      429,
+      "rate-limited",
+      "D&D Beyond temporarily limited requests. Wait before trying again.",
+    );
+  }
+  if (!response.ok) {
+    throw new ProxyError(
+      502,
+      "campaign-service-error",
+      "D&D Beyond did not return campaign data. Try again later.",
+    );
+  }
+  let payload: unknown;
+  try {
+    payload = (await response.json()) as unknown;
+  } catch {
+    throw new ProxyError(
+      502,
+      "invalid-roster-response",
+      "D&D Beyond returned an unreadable campaign roster response.",
+    );
+  }
+  return readRosterIds(payload);
+}
+
 async function handleRequest(
   request: IncomingMessage,
   response: ServerResponse,
@@ -366,28 +454,21 @@ async function handleRequest(
     return;
   }
 
-  if (path === "/api/import/campaign") {
-    sendJson(
-      response,
-      501,
-      {
-        error: "roster-unverified",
-        message:
-          "Campaign roster import is disabled until the authenticated D&D Beyond roster format is verified.",
-      } satisfies SafeError,
-      origin,
-      config,
-    );
-    return;
-  }
-
-  if (path !== "/api/import/character") {
+  if (path !== "/api/import/character" && path !== "/api/import/campaign") {
     sendJson(response, 404, { error: "not-found", message: "Endpoint not found." }, origin, config);
     return;
   }
 
   try {
     const body = validateBody(await readJsonBody(request));
+    if (path === "/api/import/campaign") {
+      const characterIds = await getCampaignCharacterIds(
+        body.id,
+        body.cobaltSession,
+      );
+      sendJson(response, 200, { characterIds }, origin, config);
+      return;
+    }
     const character = await getCharacter(body.id, body.cobaltSession);
     sendJson(response, 200, { data: character }, origin, config);
   } catch (error) {

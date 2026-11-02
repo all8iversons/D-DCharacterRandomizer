@@ -125,10 +125,20 @@ export class DdbImporterApplication extends HandlebarsApplication {
 
     this.importing = true;
     this.errorMessage = "";
-    this.statusMessage = "Checking campaign roster availability...";
+    this.statusMessage = "Importing campaign characters...";
     this.render({ force: true });
     try {
-      await importService.importCampaign(input.value);
+      const result = await importService.importCampaign(input.value);
+      const parts = [`Imported ${result.imported.length} character(s) from the campaign.`];
+      if (result.skipped.length > 0) {
+        parts.push(`${result.skipped.length} already loaded.`);
+      }
+      if (result.failed.length > 0) {
+        this.errorMessage = result.failed
+          .map((failure) => `Character ${failure.id}: ${failure.message}`)
+          .join(" ");
+      }
+      this.statusMessage = parts.join(" ");
     } catch (error) {
       this.errorMessage = this.safeErrorMessage(error);
       this.statusMessage = "";

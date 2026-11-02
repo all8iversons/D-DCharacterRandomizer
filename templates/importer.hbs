@@ -14,10 +14,10 @@
     <div class="form-fields">
       <input id="ddb-campaign-source" name="campaign-source" type="text" placeholder="https://www.dndbeyond.com/campaigns/123456" {{#if importing}}disabled{{/if}}>
       <button type="button" data-action="import-campaign" {{#if importing}}disabled{{/if}}>
-        <i class="fa-solid fa-users"></i> Check Campaign
+        <i class="fa-solid fa-users"></i> Import Campaign
       </button>
     </div>
-    <p class="hint">Campaign import remains unavailable until its roster response format is verified.</p>
+    <p class="hint">Imports every active character in the campaign. Requires the updated proxy.</p>
   </section>
 
   {{#if statusMessage}}

@@ -46,9 +46,9 @@ the service does not load `.env` files.
 - `POST /api/import/character`: exchanges the submitted `CobaltSession` for a
   short-lived D&D Beyond bearer token and requests one character payload. The
   raw cookie and bearer token are not written to logs or persistent storage.
-- `POST /api/import/campaign`: deliberately returns `roster-unverified` until
-  an authenticated campaign roster response has been inspected and its schema
-  is covered by a sanitized fixture. It does not guess the roster fields.
+- `POST /api/import/campaign`: fetches the active roster from the community
+  campaign endpoint and returns `{ characterIds }`. Roster field names are
+  parsed tolerantly (`characterId` or `id`).
 - `POST /health`: returns a minimal health status after proxy-token and origin
   checks.
 
@@ -69,6 +69,5 @@ exposed.
 ## Current limitation
 
 D&D Beyond's services are unofficial and undocumented. Individual character
-retrieval is wired to the observed community endpoint, but campaign import is
-disabled until its roster format is verified. No live credentials are needed
+retrieval and campaign rosters are wired to observed community endpoints. No live credentials are needed
 for tests; use synthetic fixtures only.
