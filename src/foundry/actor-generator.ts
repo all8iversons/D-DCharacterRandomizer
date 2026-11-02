@@ -478,6 +478,7 @@ function actorSystemData(
       hp: { value: derived.maxHitPoints, max: derived.maxHitPoints, temp: 0 },
       ac: { value: derived.armorClass },
       prof: derived.proficiencyBonus,
+      movement: { walk: identity.walkSpeed ?? 30, units: "ft" },
       spellcasting: derived.spellcasting
         ? ABILITY_ID[derived.spellcasting.ability]
         : "",

@@ -1,6 +1,7 @@
 export interface IdentityBackgroundSlice {
   name: string;
   species: string;
+  walkSpeed?: number;
   appearance: string;
   background: string;
   alignment: string;

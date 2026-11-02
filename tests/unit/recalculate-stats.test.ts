@@ -102,7 +102,7 @@ describe("recalculateDerivedStatistics", () => {
     expect(result.savingThrows.wisdom.proficient).toBe(false);
   });
 
-  it("keeps spells without a save DC when the class cannot cast", () => {
+  it("falls back to the best mental ability for DC when the class cannot cast", () => {
     const { slices } = character();
     const result = recalculateDerivedStatistics(
       slices.classProgression,
@@ -117,7 +117,16 @@ describe("recalculateDerivedStatistics", () => {
       },
       true,
     );
-    expect(result.spellcasting).toBeNull();
+    expect(result.spellcasting).not.toBeNull();
+    expect(result.spellcasting?.saveDc).toBe(
+      8 +
+        result.proficiencyBonus +
+        Math.max(
+          result.abilityModifiers.intelligence,
+          result.abilityModifiers.wisdom,
+          result.abilityModifiers.charisma,
+        ),
+    );
   });
 
   it("rejects unresolved armor or ambiguous spellcasting metadata", () => {

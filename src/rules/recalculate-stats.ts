@@ -264,7 +264,12 @@ export function recalculateDerivedStatistics(
       "Spellcasting ability is ambiguous for the assigned class progression.",
     );
   }
-  const castingAbility = castingAbilities[0] ?? null;
+  // Non-casting classes fall back to the best mental ability so DC and attack are always shown.
+  const castingAbility: AbilityKey =
+    castingAbilities[0] ??
+    (["intelligence", "wisdom", "charisma"] as const).reduce((best, key) =>
+      abilityModifiers[key] > abilityModifiers[best] ? key : best,
+    );
 
   return {
     proficiencyBonus,
@@ -283,13 +288,10 @@ export function recalculateDerivedStatistics(
     ),
     abilityModifiers,
     savingThrows,
-    spellcasting:
-      castingAbility === null
-        ? null
-        : {
-            ability: castingAbility,
-            saveDc: 8 + proficiencyBonus + abilityModifiers[castingAbility],
-            attackBonus: proficiencyBonus + abilityModifiers[castingAbility],
-          },
+    spellcasting: {
+      ability: castingAbility,
+      saveDc: 8 + proficiencyBonus + abilityModifiers[castingAbility],
+      attackBonus: proficiencyBonus + abilityModifiers[castingAbility],
+    },
   };
 }

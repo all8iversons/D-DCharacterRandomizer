@@ -888,6 +888,15 @@ function readEquipment(
   return { weapons, armor, magicItems, otherItems, attunedItems, currency };
 }
 
+function readWalkSpeed(race: JsonRecord | undefined): number {
+  const speeds = optionalRecord(race?.weightSpeeds);
+  const normal = optionalRecord(speeds?.normal);
+  const walk = normal?.walk;
+  return typeof walk === "number" && Number.isFinite(walk) && walk > 0
+    ? walk
+    : 30;
+}
+
 function readSpells(
   data: JsonRecord,
   sourceCharacterId: string,
@@ -1109,6 +1118,7 @@ export function normalizeCharacterPayload(
     identityBackground: {
       name,
       species,
+      walkSpeed: readWalkSpeed(race),
       appearance: getOptionalText(
         traits,
         "appearance",
