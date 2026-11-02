@@ -15,5 +15,8 @@
   ],
   "esmodules": [
     "dist/module.js"
+  ],
+  "styles": [
+    "styles/importer.css"
   ]
 }

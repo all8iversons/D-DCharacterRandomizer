@@ -34,7 +34,7 @@ jobs:
       - run: npm run build
 
       - name: Package module
-        run: zip -r module.zip module.json dist assets templates README.md
+        run: zip -r module.zip module.json dist assets templates styles README.md
 
       - uses: softprops/action-gh-release@v2
         with:
