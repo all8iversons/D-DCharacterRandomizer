@@ -7,7 +7,7 @@ import {
   type DerivedStatistics,
 } from "../rules/recalculate-stats.js";
 import { shuffleCharacters } from "../shuffle/shuffle-characters.js";
-import { findSystemItem, resolveSystemRules } from "./system-rules.js";
+import { findArmorItem, findSystemItem, resolveSystemRules } from "./system-rules.js";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -138,12 +138,20 @@ async function equipmentItem(
   entry: EquipmentEntry,
   warnings: string[],
 ): Promise<JsonRecord> {
-  const item = await findOptionalItem(
-    entry.name,
-    entry.category.toLowerCase().includes("weapon")
-      ? ["weapon"]
-      : ["equipment", "loot", "consumable", "tool"],
-  );
+  const item =
+    entry.armorTypeId !== null
+      ? await findArmorItem(entry.name).catch((error: unknown) => {
+          if (error instanceof RulesResolutionError) {
+            return null;
+          }
+          throw error;
+        })
+      : await findOptionalItem(
+          entry.name,
+          entry.category.toLowerCase().includes("weapon")
+            ? ["weapon"]
+            : ["equipment", "loot", "consumable", "tool"],
+        );
   if (!item) {
     return customLootItem(entry, warnings);
   }

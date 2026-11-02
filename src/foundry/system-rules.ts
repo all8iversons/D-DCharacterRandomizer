@@ -1,4 +1,5 @@
 import type {
+  ArmorCategory,
   ArmorRules,
   ClassRules,
   RulesResolution,
@@ -7,6 +8,7 @@ import type {
 import type {
   ClassProgressionSlice,
   EquipmentAndGoldSlice,
+  EquipmentEntry,
 } from "../types/character-slices.js";
 import { RulesResolutionError } from "../rules/recalculate-stats.js";
 
@@ -317,6 +319,48 @@ function readArmorRules(
   };
 }
 
+function armorRulesFromEntry(item: EquipmentEntry): ArmorRules | null {
+  // D&D Beyond armorTypeId: 1 light, 2 medium, 3 heavy, 4 shield.
+  const category: ArmorCategory | null =
+    item.armorTypeId === 1
+      ? "light"
+      : item.armorTypeId === 2
+        ? "medium"
+        : item.armorTypeId === 3
+          ? "heavy"
+          : item.armorTypeId === 4
+            ? "shield"
+            : null;
+  if (!category || item.armorClass === null) {
+    return null;
+  }
+  return {
+    itemId: item.id,
+    name: item.name,
+    category,
+    baseArmorClass: category === "shield" ? 0 : item.armorClass,
+    dexterityCap: category === "medium" ? 2 : category === "heavy" ? 0 : null,
+    shieldBonus: category === "shield" ? item.armorClass : 0,
+  };
+}
+
+export async function findArmorItem(
+  name: string,
+): Promise<FoundryItemDocument | null> {
+  const trimmed = name.trim();
+  const variants = [
+    trimmed,
+    /armor$/i.test(trimmed) ? trimmed.replace(/\s*armor$/i, "") : `${trimmed} Armor`,
+  ];
+  for (const variant of variants) {
+    const found = await findSystemItem(variant, ["equipment", "armor", "loot"]);
+    if (found) {
+      return found;
+    }
+  }
+  return null;
+}
+
 export async function resolveSystemRules(
   progression: ClassProgressionSlice,
   equipment: EquipmentAndGoldSlice,
@@ -336,17 +380,24 @@ export async function resolveSystemRules(
 
   const armor: ArmorRules[] = [];
   for (const item of equipment.armor.filter((entry) => entry.equipped)) {
-    const systemItem = await findSystemItem(item.name, [
-      "equipment",
-      "armor",
-      "loot",
-    ]);
-    if (!systemItem) {
+    const systemItem = await findArmorItem(item.name);
+    if (systemItem) {
+      try {
+        armor.push(readArmorRules(systemItem, item.name, item.id));
+        continue;
+      } catch (error) {
+        if (!(error instanceof RulesResolutionError)) {
+          throw error;
+        }
+      }
+    }
+    const fallback = armorRulesFromEntry(item);
+    if (!fallback) {
       throw new RulesResolutionError(
         `No D&D 5e compendium armor matches ${item.name}.`,
       );
     }
-    armor.push(readArmorRules(systemItem, item.name, item.id));
+    armor.push(fallback);
   }
   return { classes, armor };
 }
