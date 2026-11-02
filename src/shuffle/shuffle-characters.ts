@@ -82,6 +82,120 @@ function drawSources(
   return sources;
 }
 
+function isCaster(character: ImportedCharacter): boolean {
+  return character.slices.spellcasting.spellSlots.some(
+    (slot) => slot.count > 0,
+  );
+}
+
+// Spell lists from casters go to hybrids whose class came from a caster (and
+// non-caster lists to the rest), so full spell lists are not wasted on classes
+// that cannot use them. Within each group the draw avoids a hybrid keeping its
+// own original list and avoids repeating a source already used by that sheet.
+function assignSpellLists(
+  characters: readonly ImportedCharacter[],
+  sources: Record<SliceCategory, number[]>,
+  random: () => number,
+): void {
+  const targets = characters.map((_, index) => index);
+  const casterTargets = targets.filter((target) =>
+    isCaster(characters[sources.classProgression[target]!]!),
+  );
+  const otherTargets = targets.filter((target) => !casterTargets.includes(target));
+  const casterLists = targets.filter((index) => isCaster(characters[index]!));
+  const otherLists = targets.filter((index) => !casterLists.includes(index));
+  if (
+    casterTargets.length !== casterLists.length ||
+    otherTargets.length !== otherLists.length
+  ) {
+    return;
+  }
+
+  const others = SLICE_CATEGORIES.filter(
+    (category) => category !== "spellcasting",
+  );
+  const cost = (target: number, list: number): number => {
+    const duplicates = others.filter(
+      (category) => sources[category][target] === list,
+    ).length;
+    // Below six characters one-per-source is impossible, but keeping a hybrid's
+    // own original list is still avoided; at six or more it is only a tie-breaker.
+    const selfCost = characters.length < SLICE_CATEGORIES.length ? 1000 : 1;
+    return (list === target ? selfCost : 0) + duplicates * 10;
+  };
+  // Backtracking search for a matching inside one group, within a cost limit.
+  const solveGroup = (
+    groupTargets: number[],
+    groupLists: number[],
+    limit: number,
+  ): number[] | undefined => {
+    const result = new Array<number>(groupTargets.length);
+    const taken = new Set<number>();
+    let budget = 20000;
+    const visit = (position: number): boolean => {
+      if (position === groupTargets.length) {
+        return true;
+      }
+      for (const list of shuffled(groupLists, random)) {
+        budget -= 1;
+        if (budget < 0) {
+          return false;
+        }
+        if (taken.has(list) || cost(groupTargets[position]!, list) > limit) {
+          continue;
+        }
+        taken.add(list);
+        result[position] = list;
+        if (visit(position + 1)) {
+          return true;
+        }
+        taken.delete(list);
+      }
+      return false;
+    };
+    return visit(0) ? result : undefined;
+  };
+  for (const limit of [0, 1, 10, 11, 20, 21, 30, 31, 40, 41, 50, 51]) {
+    const exactCasters = solveGroup(casterTargets, casterLists, limit);
+    const exactOthers = solveGroup(otherTargets, otherLists, limit);
+    if (exactCasters && exactOthers) {
+      const mapping = new Array<number>(characters.length);
+      casterTargets.forEach((target, position) => {
+        mapping[target] = exactCasters[position]!;
+      });
+      otherTargets.forEach((target, position) => {
+        mapping[target] = exactOthers[position]!;
+      });
+      sources.spellcasting = mapping;
+      return;
+    }
+  }
+  const score = (mapping: number[]): number =>
+    targets.reduce((total, target) => total + cost(target, mapping[target]!), 0);
+
+  let best: number[] | undefined;
+  let bestScore = Number.POSITIVE_INFINITY;
+  for (let attempt = 0; attempt < 300 && bestScore > 0; attempt += 1) {
+    const mapping = new Array<number>(characters.length);
+    const casters = shuffled(casterLists, random);
+    const rest = shuffled(otherLists, random);
+    casterTargets.forEach((target, position) => {
+      mapping[target] = casters[position]!;
+    });
+    otherTargets.forEach((target, position) => {
+      mapping[target] = rest[position]!;
+    });
+    const candidate = score(mapping);
+    if (candidate < bestScore) {
+      best = mapping;
+      bestScore = candidate;
+    }
+  }
+  if (best) {
+    sources.spellcasting = best;
+  }
+}
+
 export function shuffleCharacters(
   characters: readonly ImportedCharacter[],
   random: () => number = Math.random,
@@ -91,6 +205,9 @@ export function shuffleCharacters(
   }
 
   const sources = drawSources(characters.length, random);
+  if (characters.length > 2) {
+    assignSpellLists(characters, sources, random);
+  }
 
   return characters.map((_, targetIndex) => {
     const sourceAt = (category: SliceCategory): ImportedCharacter => {
