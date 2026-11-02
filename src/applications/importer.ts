@@ -151,9 +151,10 @@ export class DdbImporterApplication extends HandlebarsApplication {
   private createShufflePreview(event: Event): void {
     event.preventDefault();
     try {
+      const hadPreview = this.shuffledPreview.length > 0;
       this.shuffledPreview = shuffleCharacters(importService.characters);
       this.errorMessage = "";
-      this.statusMessage = `Created a ${this.shuffledPreview.length}-character shuffle preview. Review the assignments before creating Actors.`;
+      this.statusMessage = `${hadPreview ? "Reshuffled:" : "Created"} a ${this.shuffledPreview.length}-character shuffle preview. Review the assignments before creating Actors.`;
     } catch (error) {
       this.errorMessage = this.safeErrorMessage(error);
       this.statusMessage = "";

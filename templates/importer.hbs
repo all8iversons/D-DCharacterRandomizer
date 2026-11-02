@@ -42,6 +42,9 @@
           <p>Spellcasting: source {{character.origins.spellcasting.sourceCharacterId}}</p>
         </details>
       {{/each}}
+      <button type="button" data-action="shuffle-preview" {{#if importing}}disabled{{/if}}>
+        <i class="fa-solid fa-dice"></i> Reshuffle
+      </button>
       <button type="button" data-action="create-actors" {{#if importing}}disabled{{/if}}>
         <i class="fa-solid fa-user-plus"></i> Create Shuffled Actors
       </button>
@@ -124,7 +127,7 @@
 
   <footer class="form-footer">
     <button type="button" data-action="shuffle-preview" {{#unless canShuffle}}disabled{{/unless}}>
-      <i class="fa-solid fa-shuffle"></i> Shuffle Characters
+      <i class="fa-solid fa-shuffle"></i> {{#if hasShufflePreview}}Reshuffle Characters{{else}}Shuffle Characters{{/if}}
     </button>
     {{#unless canShuffle}}
       <p class="hint">Import at least two valid characters to enable the shuffle control.</p>
