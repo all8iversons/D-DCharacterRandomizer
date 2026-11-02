@@ -258,7 +258,8 @@ export function recalculateDerivedStatistics(
       ),
     ),
   ];
-  if (hasSpells && castingAbilities.length !== 1) {
+  // Zero casting abilities is valid after a shuffle: spells are kept without a save DC.
+  if (hasSpells && castingAbilities.length > 1) {
     throw new RulesResolutionError(
       "Spellcasting ability is ambiguous for the assigned class progression.",
     );

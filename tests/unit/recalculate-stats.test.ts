@@ -102,6 +102,24 @@ describe("recalculateDerivedStatistics", () => {
     expect(result.savingThrows.wisdom.proficient).toBe(false);
   });
 
+  it("keeps spells without a save DC when the class cannot cast", () => {
+    const { slices } = character();
+    const result = recalculateDerivedStatistics(
+      slices.classProgression,
+      slices.coreAbilityScores,
+      slices.equipmentAndGold,
+      {
+        ...rules,
+        classes: rules.classes.map((entry) => ({
+          ...entry,
+          spellcastingAbility: null,
+        })),
+      },
+      true,
+    );
+    expect(result.spellcasting).toBeNull();
+  });
+
   it("rejects unresolved armor or ambiguous spellcasting metadata", () => {
     const { slices } = character();
     const multiclass = {
