@@ -48,6 +48,15 @@ interface FoundryGame {
   folders: {
     contents: readonly FoundryFolder[];
   };
+  users: {
+    contents: readonly FoundryUser[];
+  };
+  world: {
+    id: string;
+  };
+  journal: {
+    contents: readonly (FoundryJournalEntry & { folder?: string | null })[];
+  };
   packs: readonly FoundryPack[];
   notifications: {
     info(message: string): void;
@@ -102,12 +111,43 @@ interface FoundryFolderDocumentClass {
   create(document: Record<string, unknown>): Promise<FoundryFolder>;
 }
 
+interface FoundryUser {
+  id: string;
+  name: string;
+  isGM: boolean;
+}
+
+interface FoundryJournalEntry {
+  id: string;
+  name: string;
+}
+
+interface FoundryFilePickerImplementation {
+  createDirectory(
+    source: string,
+    target: string,
+    options?: Record<string, unknown>,
+  ): Promise<unknown>;
+  upload(
+    source: string,
+    path: string,
+    file: File,
+    body?: Record<string, unknown>,
+    options?: Record<string, unknown>,
+  ): Promise<{ path?: string } | false | void>;
+}
+
 interface FoundryConfig {
   Actor: {
     documentClass: FoundryActorDocumentClass;
   };
   Folder: {
     documentClass: FoundryFolderDocumentClass;
+  };
+  JournalEntry: {
+    documentClass: {
+      create(document: Record<string, unknown>): Promise<FoundryJournalEntry>;
+    };
   };
 }
 
@@ -156,6 +196,11 @@ interface FoundryApplicationsApi {
 
 interface FoundryApplications {
   api: FoundryApplicationsApi;
+  apps: {
+    FilePicker: {
+      implementation: FoundryFilePickerImplementation;
+    };
+  };
 }
 
 interface FoundryGlobal {

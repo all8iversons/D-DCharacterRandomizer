@@ -109,6 +109,15 @@
             <button type="button" data-action="export-pdf" data-actor-id="{{actor.id}}">
               <i class="fa-solid fa-file-pdf"></i> Fillable PDF
             </button>
+            <select name="handout-user" aria-label="Share handout with">
+              <option value="">GM only</option>
+              {{#each ../users as |user|}}
+                <option value="{{user.id}}">{{user.name}}</option>
+              {{/each}}
+            </select>
+            <button type="button" data-action="create-handout" data-actor-id="{{actor.id}}" {{#if ../importing}}disabled{{/if}}>
+              <i class="fa-solid fa-book-open"></i> Create Handout
+            </button>
           </div>
         </div>
       {{/each}}

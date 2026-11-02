@@ -15,6 +15,7 @@ import { shuffleCharacters } from "../shuffle/shuffle-characters.js";
 import type { ShuffledCharacter } from "../types/shuffle-model.js";
 import type { ImportedCharacter } from "../types/import-model.js";
 import { RulesResolutionError } from "../rules/recalculate-stats.js";
+import { assignableUsers, createPdfHandout } from "../foundry/handouts.js";
 
 const HandlebarsApplication =
   foundry.applications.api.HandlebarsApplicationMixin(
@@ -42,6 +43,7 @@ export class DdbImporterApplication extends HandlebarsApplication {
       "export-json": DdbImporterApplication.prototype.exportJson,
       "export-json-batch": DdbImporterApplication.prototype.exportJsonBatch,
       "export-pdf": DdbImporterApplication.prototype.exportPdf,
+      "create-handout": DdbImporterApplication.prototype.createHandout,
     },
   };
 
@@ -73,6 +75,7 @@ export class DdbImporterApplication extends HandlebarsApplication {
       hasShufflePreview: this.shuffledPreview.length > 0,
       generatedActors: this.generatedActors,
       generationWarnings: this.generationWarnings,
+      users: assignableUsers(),
       importing: this.importing,
       errorMessage: this.errorMessage,
       statusMessage: this.statusMessage,
@@ -212,6 +215,40 @@ export class DdbImporterApplication extends HandlebarsApplication {
       this.statusMessage = "";
     }
     this.render({ force: true });
+  }
+
+  private async createHandout(
+    event: Event,
+    target: HTMLElement,
+  ): Promise<void> {
+    event.preventDefault();
+    const actor = this.actorForTarget(target);
+    if (!actor) {
+      this.errorMessage = "The selected Actor is no longer available.";
+      this.render({ force: true });
+      return;
+    }
+    const select = target
+      .closest(".form-group")
+      ?.querySelector<HTMLSelectElement>("[name='handout-user']");
+    const userId = select?.value ?? "";
+    this.importing = true;
+    this.errorMessage = "";
+    this.statusMessage = `Creating PDF handout for ${actor.name}...`;
+    this.render({ force: true });
+    try {
+      const entry = await createPdfHandout(actor, userId);
+      const user = game.users.contents.find((candidate) => candidate.id === userId);
+      this.statusMessage = user
+        ? `Created handout "${entry.name}" and shared it with ${user.name}.`
+        : `Created handout "${entry.name}" (GM only; change its permissions to share it).`;
+    } catch (error) {
+      this.errorMessage = this.safeErrorMessage(error);
+      this.statusMessage = "";
+    } finally {
+      this.importing = false;
+      this.render({ force: true });
+    }
   }
 
   private async exportPdf(event: Event, target: HTMLElement): Promise<void> {
