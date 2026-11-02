@@ -53,6 +53,10 @@ export interface FeatEntry {
   id: string | null;
   name: string;
   description: string;
+  // Homebrew feats and custom actions skip compendium lookup so they cannot match an official entry by name.
+  custom?: boolean;
+  // Set for custom actions so they appear in the action lists.
+  activation?: "action" | "bonus" | "reaction";
 }
 
 export interface ProficienciesAndFeatsSlice {
@@ -80,6 +84,7 @@ export interface EquipmentEntry {
   damageType: string;
   weight: number | null;
   cost: number | null;
+  custom?: boolean;
 }
 
 export interface Currency {
@@ -104,6 +109,8 @@ export interface SpellEntry {
   name: string;
   level: number;
   prepared: boolean;
+  description?: string;
+  custom?: boolean;
 }
 
 export interface SpellSlotCount {

@@ -395,7 +395,11 @@ function activationNames(
     .filter((item) => item.type === "feat")
     .filter((item) => {
       const system = recordAt(item, "system");
+      const flagged = text(
+        recordAt(recordAt(item, "flags"), "d-d-character-randomizer").activation,
+      );
       const types = [
+        flagged,
         text(recordAt(system, "activation").type),
         ...Object.values(recordAt(system, "activities")).map((activity) =>
           text(recordAt(recordAt(activity, "activation"), "type")),

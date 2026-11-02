@@ -1,6 +1,7 @@
 import type {
   Currency,
   EquipmentEntry,
+  FeatEntry,
   ProficiencyEntry,
   SpellEntry,
 } from "../types/character-slices.js";
@@ -268,6 +269,43 @@ function optionalDescriptionText(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
+// Custom content is player-authored, so tolerate odd shapes instead of failing the import.
+function looseText(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function looseNumber(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0
+    ? value
+    : fallback;
+}
+
+function customItemEntry(raw: unknown): EquipmentEntry | null {
+  if (!isRecord(raw)) {
+    return null;
+  }
+  const name = looseText(raw.name);
+  if (!name) {
+    return null;
+  }
+  return {
+    id: optionalId(raw.id),
+    name,
+    category: "Custom Item",
+    description: looseText(raw.description) || looseText(raw.notes),
+    quantity: looseNumber(raw.quantity, 1),
+    attuned: raw.isAttuned === true,
+    equipped: raw.equipped === true,
+    armorClass: null,
+    armorTypeId: null,
+    damage: "",
+    damageType: "",
+    weight: looseNumber(raw.weight, 0),
+    cost: looseNumber(raw.cost, 0),
+    custom: true,
+  };
+}
+
 function humanize(value: string): string {
   return value
     .split(/[-_ ]+/)
@@ -459,7 +497,7 @@ function readProficiencies(
     tools: [] as ProficiencyEntry[],
     armor: [] as ProficiencyEntry[],
     weapons: [] as ProficiencyEntry[],
-    feats: [] as { id: string | null; name: string; description: string }[],
+    feats: [] as FeatEntry[],
     senses: [] as ProficiencyEntry[],
   };
   const modifiers = optionalRecord(data.modifiers);
@@ -601,6 +639,7 @@ function readProficiencies(
       sourceCharacterId,
       "D&D Beyond returned an incomplete feat.",
     );
+    const homebrew = definition.isHomebrew === true;
     result.feats.push({
       id: optionalId(definition.id ?? feat.definitionId),
       name: textValue(
@@ -615,6 +654,39 @@ function readProficiencies(
         sourceCharacterId,
         "D&D Beyond returned invalid feat details.",
       ),
+      ...(homebrew ? { custom: true } : {}),
+    });
+  }
+
+  // Player-created actions live outside the feat list; keep them as custom features.
+  for (const rawAction of Array.isArray(data.customActions)
+    ? (data.customActions as unknown[])
+    : []) {
+    if (!isRecord(rawAction)) {
+      continue;
+    }
+    const actionName = looseText(rawAction.name);
+    if (!actionName) {
+      continue;
+    }
+    const description =
+      looseText(rawAction.description) || looseText(rawAction.snippet);
+    // D&D Beyond activationType: 1 action, 3 bonus action, 4 reaction.
+    const activationType =
+      typeof rawAction.activationType === "number"
+        ? rawAction.activationType
+        : null;
+    result.feats.push({
+      id: optionalId(rawAction.id),
+      name: actionName,
+      description,
+      custom: true,
+      activation:
+        activationType === 3
+          ? "bonus"
+          : activationType === 4
+            ? "reaction"
+            : "action",
     });
   }
   return result;
@@ -702,6 +774,7 @@ function toEquipmentEntry(
           Number.MAX_SAFE_INTEGER,
         );
   const attuned = item.isAttuned === true;
+  const homebrew = definition.isHomebrew === true;
   return {
     id: optionalId(item.id ?? definition.id),
     name,
@@ -758,6 +831,7 @@ function toEquipmentEntry(
       "D&D Beyond returned invalid inventory cost.",
       Number.MAX_SAFE_INTEGER,
     ),
+    ...(homebrew ? { custom: true } : {}),
   };
 }
 
@@ -795,6 +869,18 @@ function readEquipment(
     } else {
       otherItems.push(entry);
     }
+    if (entry.attuned) {
+      attunedItems.push(structuredClone(entry));
+    }
+  }
+  for (const rawCustom of Array.isArray(data.customItems)
+    ? (data.customItems as unknown[])
+    : []) {
+    const entry = customItemEntry(rawCustom);
+    if (!entry) {
+      continue;
+    }
+    (entry.attuned ? magicItems : otherItems).push(entry);
     if (entry.attuned) {
       attunedItems.push(structuredClone(entry));
     }
@@ -851,6 +937,12 @@ function readSpells(
         ),
         level,
         prepared: spell.prepared === true || spell.alwaysPrepared === true,
+        ...(definition.isHomebrew === true
+          ? {
+              custom: true,
+              description: looseText(definition.description),
+            }
+          : {}),
       };
       if (level === 0) {
         cantrips.push(entry);

@@ -96,9 +96,11 @@ function customLootItem(
   ]
     .filter((value) => value.length > 0)
     .join("\n");
-  warnings.push(
-    `${entry.name} was added as custom loot; Foundry mechanics were not available.`,
-  );
+  if (entry.custom !== true) {
+    warnings.push(
+      `${entry.name} was added as custom loot; Foundry mechanics were not available.`,
+    );
+  }
   return {
     name: entry.name,
     type: "loot",
@@ -108,6 +110,8 @@ function customLootItem(
       weight: entry.weight ?? 0,
       price: { value: entry.cost ?? 0 },
       identified: true,
+      equipped: entry.equipped,
+      attuned: entry.attuned,
     },
     flags: {
       "d-d-character-randomizer": {
@@ -138,6 +142,10 @@ async function equipmentItem(
   entry: EquipmentEntry,
   warnings: string[],
 ): Promise<JsonRecord> {
+  if (entry.custom === true) {
+    // Homebrew and custom items must never be swapped for a similarly named official item.
+    return customLootItem(entry, warnings);
+  }
   const item =
     entry.armorTypeId !== null
       ? await findArmorItem(entry.name).catch((error: unknown) => {
@@ -225,6 +233,20 @@ async function spellItem(
   entry: SpellEntry,
   warnings: string[],
 ): Promise<JsonRecord> {
+  if (entry.custom === true) {
+    return {
+      name: entry.name,
+      type: "spell",
+      system: {
+        level: entry.level,
+        description: { value: entry.description ?? "" },
+        preparation: { mode: "prepared", prepared: entry.prepared },
+      },
+      flags: {
+        "d-d-character-randomizer": { customDataOnly: true },
+      },
+    };
+  }
   const item = await findOptionalItem(entry.name, ["spell"]);
   if (item) {
     const data = cloneCompendiumItem(item);
@@ -257,18 +279,30 @@ async function featureItem(
   description: string,
   expectedTypes: readonly string[],
   warnings: string[],
+  custom?: { activation?: "action" | "bonus" | "reaction" },
 ): Promise<JsonRecord> {
-  const item = await findOptionalItem(name, expectedTypes);
-  if (item) {
-    return cloneCompendiumItem(item);
+  if (!custom) {
+    const item = await findOptionalItem(name, expectedTypes);
+    if (item) {
+      return cloneCompendiumItem(item);
+    }
+    warnings.push(`${name} was added as a custom feature without system mechanics.`);
   }
-  warnings.push(`${name} was added as a custom feature without system mechanics.`);
   return {
     name,
     type: "feat",
-    system: { description: { value: description } },
+    system: {
+      description: { value: description },
+      type: { value: "feat" },
+      ...(custom?.activation
+        ? { activation: { type: custom.activation, cost: 1 } }
+        : {}),
+    },
     flags: {
-      "d-d-character-randomizer": { customDataOnly: true },
+      "d-d-character-randomizer": {
+        customDataOnly: true,
+        ...(custom?.activation ? { activation: custom.activation } : {}),
+      },
     },
   };
 }
@@ -323,7 +357,17 @@ async function resolveActorItems(
 
   for (const feat of character.slices.proficienciesAndFeats.feats) {
     items.push(
-      await featureItem(feat.name, feat.description, ["feat"], warnings),
+      await featureItem(
+        feat.name,
+        feat.description,
+        ["feat"],
+        warnings,
+        feat.custom
+          ? feat.activation
+            ? { activation: feat.activation }
+            : {}
+          : undefined,
+      ),
     );
   }
 
