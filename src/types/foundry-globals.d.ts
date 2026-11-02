@@ -61,10 +61,7 @@ interface FoundryActor {
   name: string;
   folder: string | null;
   exportToJSON(): string | Promise<string>;
-  toObject(): Record<string, unknown>;
-}
-
-interface FoundryFolder {
+  toObject(source?: boolean): Record<string, unknown>;
   id: string;
   name: string;
   type: string;

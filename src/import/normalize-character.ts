@@ -738,12 +738,20 @@ function toEquipmentEntry(
           ),
     damage: optionalDescriptionText(definition.damage),
     damageType: optionalDescriptionText(definition.damageType),
-    weight: optionalNumber(
-      definition.weight,
-      sourceCharacterId,
-      "D&D Beyond returned invalid inventory weight.",
-      Number.MAX_SAFE_INTEGER,
-    ),
+    // D&D Beyond reports weight per bundle (for example 2 lb per 1000 ball bearings).
+    weight: (() => {
+      const bundleWeight = optionalNumber(
+        definition.weight,
+        sourceCharacterId,
+        "D&D Beyond returned invalid inventory weight.",
+        Number.MAX_SAFE_INTEGER,
+      );
+      const bundleSize =
+        typeof definition.bundleSize === "number" && definition.bundleSize > 1
+          ? definition.bundleSize
+          : 1;
+      return bundleWeight === null ? null : bundleWeight / bundleSize;
+    })(),
     cost: optionalNumber(
       definition.cost,
       sourceCharacterId,

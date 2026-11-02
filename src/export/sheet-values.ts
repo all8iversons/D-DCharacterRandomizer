@@ -281,7 +281,7 @@ function featureBlocks(items: readonly JsonRecord[]): string[] {
     const system = recordAt(item, "system");
     const kind = text(recordAt(system, "type").value);
     const group = FEATURE_GROUPS[kind] ?? "OTHER FEATURES";
-    const description = plain(text(recordAt(system, "description").value), 260);
+    const description = plain(text(recordAt(system, "description").value), 600);
     const entry = `* ${text(item.name)}${description ? `\n${description}` : ""}`;
     groups.set(group, [...(groups.get(group) ?? []), entry]);
   }
@@ -421,7 +421,39 @@ export function actorFieldValues(actorData: JsonRecord): Record<string, string> 
     "narrative",
   );
   const items = entries(actorData.items);
-  const proficiency = num(attributes.prof);
+  const derivedFlags = recordAt(
+    recordAt(recordAt(actorData, "flags"), "d-d-character-randomizer"),
+    "derived",
+  );
+  const classItems = items.filter((item) => item.type === "class");
+  const classLevels = classItems.reduce(
+    (sum, item) => sum + num(recordAt(item, "system").levels),
+    0,
+  );
+  const level = num(details.level) || num(derivedFlags.level) || classLevels;
+  const className =
+    classItems.map((item) => text(item.name)).join(" / ") ||
+    text(details.class) ||
+    text(derivedFlags.className);
+  const subclassName =
+    items
+      .filter((item) => item.type === "subclass")
+      .map((item) => text(item.name))
+      .join(" / ") ||
+    text(details.subclass) ||
+    text(derivedFlags.subclass);
+  const proficiency =
+    num(attributes.prof) ||
+    num(derivedFlags.proficiencyBonus) ||
+    (level > 0 ? 2 + Math.floor((level - 1) / 4) : 0);
+  const armorClass = num(ac.value) || num(derivedFlags.armorClass);
+  const maxHp = num(hp.max) || num(derivedFlags.maxHitPoints) || num(hp.value);
+  const spellAbility =
+    text(attributes.spellcasting) || text(derivedFlags.spellAbility);
+  const spellDc = num(attributes.spelldc) || num(derivedFlags.spellSaveDc);
+  const spellAttack =
+    num(attributes.spellattack) || num(derivedFlags.spellAttack);
+  const hasSpellcasting = spellAbility !== "";
   const skills = recordAt(system, "skills");
   const modifiers: Record<string, number> = {};
 
@@ -434,17 +466,17 @@ export function actorFieldValues(actorData: JsonRecord): Record<string, string> 
   }
   Object.assign(values, {
     "identity.name": text(actorData.name),
-    "identity.class": text(details.class),
-    "identity.subclass": text(details.subclass),
-    "identity.level": text(details.level),
+    "identity.class": className,
+    "identity.subclass": subclassName,
+    "identity.level": level > 0 ? String(level) : "",
     "identity.xp": text(recordAt(details, "xp").value),
     "identity.species": text(details.race),
     "identity.background": text(details.background),
     "identity.alignment": text(details.alignment),
-    "stats.ac": text(ac.value),
+    "stats.ac": armorClass > 0 ? String(armorClass) : "",
     "stats.prof": signed(proficiency),
-    "stats.hp": text(hp.max ?? hp.value),
-    "stats.hpcurrent": text(hp.value),
+    "stats.hp": maxHp > 0 ? String(maxHp) : "",
+    "stats.hpcurrent": text(hp.value) || (maxHp > 0 ? String(maxHp) : ""),
     "stats.hptemp": text(hp.temp),
     "stats.inspiration": attributes.inspiration === true ? "Yes" : "",
     "proficiency.armor": profText("armorProf"),
@@ -466,10 +498,12 @@ export function actorFieldValues(actorData: JsonRecord): Record<string, string> 
     "identity.bonds": text(narrative.bonds),
     "identity.flaws": text(narrative.flaws),
     "identity.backstory": text(narrative.backstory) || text(biography.value),
-    "spellcasting.class": text(details.class),
-    "spellcasting.ability": text(attributes.spellcasting).toUpperCase(),
-    "spellcasting.dc": text(attributes.spelldc),
-    "spellcasting.attack": text(attributes.spellattack),
+    "spellcasting.class": className,
+    "spellcasting.ability": hasSpellcasting
+      ? spellAbility.slice(0, 3).toUpperCase()
+      : "",
+    "spellcasting.dc": hasSpellcasting ? String(spellDc) : "",
+    "spellcasting.attack": hasSpellcasting ? signed(spellAttack) : "",
     "equipment.cp": text(currency.cp),
     "equipment.sp": text(currency.sp),
     "equipment.ep": text(currency.ep),
@@ -567,7 +601,7 @@ export function actorFieldValues(actorData: JsonRecord): Record<string, string> 
       const saves = text(recordAt(itemSystem, "save").ability);
       attackRows.push({
         name: text(item.name),
-        hit: saves ? `DC ${text(attributes.spelldc)}` : text(attributes.spellattack) ? signed(num(attributes.spellattack)) : "",
+        hit: saves ? `DC ${spellDc}` : spellAttack ? signed(spellAttack) : "",
         damage: damageText(itemSystem, 0),
         notes: "Cantrip",
       });

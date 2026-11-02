@@ -95,7 +95,7 @@ export async function exportActorPdf(
   const pdf = await PDFDocument.load(source);
   const form = pdf.getForm();
   const font = await pdf.embedFont(StandardFonts.Helvetica);
-  const values = actorFieldValues(actor.toObject());
+  const values = actorFieldValues(actor.toObject(false));
   for (const name of PDF_FIELD_NAMES) {
     let field: PDFTextField;
     try {

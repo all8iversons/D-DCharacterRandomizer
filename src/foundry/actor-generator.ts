@@ -152,7 +152,65 @@ async function equipmentItem(
   if ("quantity" in system) {
     system.quantity = entry.quantity;
   }
+  if (entry.weight !== null && "weight" in system) {
+    if (isRecord(system.weight)) {
+      system.weight.value = entry.weight;
+    } else {
+      system.weight = entry.weight;
+    }
+  }
+  system.equipped = entry.equipped;
+  if (entry.attuned) {
+    system.attuned = true;
+  }
   return data;
+}
+
+// Resolves compendium items granted by an item's ItemGrant advancements up to a level.
+async function grantedItems(
+  data: JsonRecord,
+  level: number,
+  seen: Set<string>,
+): Promise<JsonRecord[]> {
+  const system = getSystemRecord(data);
+  const advancements = Array.isArray(system.advancement)
+    ? system.advancement
+    : isRecord(system.advancement)
+      ? Object.values(system.advancement)
+      : [];
+  const granted: JsonRecord[] = [];
+  for (const advancement of advancements) {
+    if (
+      !isRecord(advancement) ||
+      advancement.type !== "ItemGrant" ||
+      (typeof advancement.level === "number" && advancement.level > level)
+    ) {
+      continue;
+    }
+    const configuration = isRecord(advancement.configuration)
+      ? advancement.configuration
+      : {};
+    const entries = Array.isArray(configuration.items)
+      ? configuration.items
+      : [];
+    for (const entry of entries) {
+      const uuid =
+        typeof entry === "string"
+          ? entry
+          : isRecord(entry) && typeof entry.uuid === "string"
+            ? entry.uuid
+            : "";
+      if (!uuid || seen.has(uuid)) {
+        continue;
+      }
+      seen.add(uuid);
+      const item = await fromUuid(uuid);
+      if (item) {
+        granted.push(cloneCompendiumItem(item));
+      }
+    }
+  }
+  return granted;
 }
 
 async function spellItem(
@@ -212,6 +270,7 @@ async function resolveActorItems(
   warnings: string[],
 ): Promise<JsonRecord[]> {
   const items: JsonRecord[] = [];
+  const seenGrants = new Set<string>();
   for (const classLevel of character.slices.classProgression.classes) {
     const classItem = await findSystemItem(classLevel.className, ["class"]);
     if (!classItem) {
@@ -223,15 +282,34 @@ async function resolveActorItems(
     const classSystem = getSystemRecord(classData);
     classSystem.levels = classLevel.level;
     items.push(classData);
+    items.push(...(await grantedItems(classData, classLevel.level, seenGrants)));
     if (classLevel.subclass) {
-      items.push(
-        await featureItem(
-          classLevel.subclass,
-          "",
-          ["subclass"],
-          warnings,
-        ),
+      const subclassData = await featureItem(
+        classLevel.subclass,
+        "",
+        ["subclass"],
+        warnings,
       );
+      items.push(subclassData);
+      items.push(
+        ...(await grantedItems(subclassData, classLevel.level, seenGrants)),
+      );
+    }
+  }
+
+  const identity = character.slices.identityBackground;
+  for (const [name, type] of [
+    [identity.species, "race"],
+    [identity.background, "background"],
+  ] as const) {
+    if (!name) {
+      continue;
+    }
+    const origin = await findOptionalItem(name, [type]);
+    if (origin) {
+      const originData = cloneCompendiumItem(origin);
+      items.push(originData);
+      items.push(...(await grantedItems(originData, 20, seenGrants)));
     }
   }
 
@@ -414,6 +492,18 @@ async function buildActorData(
       flags: {
         "d-d-character-randomizer": {
           generated: true,
+          derived: {
+            armorClass: derived.armorClass,
+            maxHitPoints: derived.maxHitPoints,
+            proficiencyBonus: derived.proficiencyBonus,
+            className: character.slices.classProgression.className,
+            subclass: character.slices.classProgression.subclass,
+            level: character.slices.classProgression.totalLevel,
+            hitDice: character.slices.classProgression.hitDice,
+            spellAbility: derived.spellcasting?.ability ?? "",
+            spellSaveDc: derived.spellcasting?.saveDc ?? 0,
+            spellAttack: derived.spellcasting?.attackBonus ?? 0,
+          },
           componentOrigins: structuredClone(character.origins),
           narrative: {
             appearance: character.slices.identityBackground.appearance,

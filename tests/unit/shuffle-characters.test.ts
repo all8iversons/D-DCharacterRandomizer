@@ -58,12 +58,16 @@ describe("shuffleCharacters", () => {
     }
   });
 
-  it("deranges two inputs and rejects invalid random values", () => {
+  it("mixes two inputs instead of swapping whole sheets and rejects invalid random values", () => {
     const source = characters().slice(0, 2);
     const result = shuffleCharacters(source, () => 0.5);
 
-    expect(result.map((character) => character.origins.identityBackground.sourceIndex))
-      .toEqual([1, 0]);
+    for (const character of result) {
+      const origins = new Set(
+        Object.values(character.origins).map((origin) => origin.sourceIndex),
+      );
+      expect(origins.size).toBe(2);
+    }
     expect(() => shuffleCharacters(source, () => 1)).toThrow(RangeError);
   });
 
