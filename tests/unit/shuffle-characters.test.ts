@@ -71,6 +71,31 @@ describe("shuffleCharacters", () => {
     expect(() => shuffleCharacters(source, () => 1)).toThrow(RangeError);
   });
 
+  it("spreads each sheet's six slices across as many characters as possible", () => {
+    const pool = characters();
+    const six = [...pool, ...pool.slice(0, 2)];
+    const eight = [...six, ...pool.slice(0, 2)];
+    for (const source of [six, eight]) {
+      for (let run = 0; run < 20; run += 1) {
+        const result = shuffleCharacters(source);
+        for (const character of result) {
+          const origins = Object.values(character.origins).map(
+            (origin) => origin.sourceIndex,
+          );
+          expect(new Set(origins).size).toBe(6);
+        }
+      }
+    }
+    const five = shuffleCharacters([...pool, pool[0]!]);
+    for (const character of five) {
+      const counts = new Map<number, number>();
+      for (const origin of Object.values(character.origins)) {
+        counts.set(origin.sourceIndex, (counts.get(origin.sourceIndex) ?? 0) + 1);
+      }
+      expect(Math.max(...counts.values())).toBeLessThanOrEqual(2);
+    }
+  });
+
   it("requires at least two characters", () => {
     expect(() => shuffleCharacters(characters().slice(0, 1))).toThrow(
       RangeError,

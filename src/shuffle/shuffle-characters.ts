@@ -13,25 +13,6 @@ const SLICE_CATEGORIES: readonly SliceCategory[] = [
   "spellcasting",
 ];
 
-function randomDerangement(
-  length: number,
-  random: () => number,
-): number[] {
-  const permutation = Array.from({ length }, (_, index) => index);
-  for (let index = length - 1; index > 0; index -= 1) {
-    const sample = random();
-    if (!Number.isFinite(sample) || sample < 0 || sample >= 1) {
-      throw new RangeError("Random source must return a value in [0, 1).");
-    }
-    const swapIndex = Math.floor(sample * index);
-    [permutation[index], permutation[swapIndex]] = [
-      permutation[swapIndex]!,
-      permutation[index]!,
-    ];
-  }
-  return permutation;
-}
-
 function checkedSample(random: () => number): number {
   const sample = random();
   if (!Number.isFinite(sample) || sample < 0 || sample >= 1) {
@@ -57,6 +38,18 @@ function drawPairSources(
   return sources;
 }
 
+function shuffled<T>(items: readonly T[], random: () => number): T[] {
+  const result = [...items];
+  for (let index = result.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(checkedSample(random) * (index + 1));
+    [result[index], result[swapIndex]] = [result[swapIndex]!, result[index]!];
+  }
+  return result;
+}
+
+// Each bucket is a cyclic rotation of one shared random ordering. Giving every
+// bucket a different rotation offset spreads a sheet's buckets over as many
+// different source characters as possible (N >= 6 means one bucket per character).
 function drawSources(
   length: number,
   random: () => number,
@@ -64,25 +57,28 @@ function drawSources(
   if (length === 2) {
     return drawPairSources(random);
   }
-  let sources = {} as Record<SliceCategory, number[]>;
-  for (let attempt = 0; attempt < 50; attempt += 1) {
-    sources = {} as Record<SliceCategory, number[]>;
-    for (const category of SLICE_CATEGORIES) {
-      sources[category] = randomDerangement(length, random);
-    }
-    // Reject draws that hand any target a whole original character.
-    const wholeSheet = Array.from({ length }, (_, target) => target).some(
-      (target) => {
-        const first = sources[SLICE_CATEGORIES[0]!][target];
-        return SLICE_CATEGORIES.every(
-          (category) => sources[category][target] === first,
-        );
-      },
-    );
-    if (!wholeSheet) {
-      break;
-    }
+  const order = shuffled(
+    Array.from({ length }, (_, index) => index),
+    random,
+  );
+  // At exactly six characters one bucket must come from the sheet's own character
+  // for every bucket to have a different origin.
+  const offsets = Array.from({ length }, (_, index) => index).filter(
+    (offset) => offset !== 0 || length === SLICE_CATEGORIES.length,
+  );
+  const assigned: number[] = [];
+  while (assigned.length < SLICE_CATEGORIES.length) {
+    assigned.push(...shuffled(offsets, random));
   }
+  const sources = {} as Record<SliceCategory, number[]>;
+  SLICE_CATEGORIES.forEach((category, categoryIndex) => {
+    const offset = assigned[categoryIndex]!;
+    const mapping = new Array<number>(length);
+    order.forEach((target, position) => {
+      mapping[target] = order[(position + offset) % length]!;
+    });
+    sources[category] = mapping;
+  });
   return sources;
 }
 
