@@ -410,6 +410,23 @@ function activationNames(
     .map((item) => `* ${text(item.name)}`);
 }
 
+export function actorClassName(actorData: JsonRecord): string {
+  const details = recordAt(recordAt(actorData, "system"), "details");
+  const derived = recordAt(
+    recordAt(recordAt(actorData, "flags"), "d-d-character-randomizer"),
+    "derived",
+  );
+  return (
+    entries(actorData.items)
+      .filter((item) => item.type === "class")
+      .map((item) => text(item.name))
+      .filter(Boolean)
+      .join(" / ") ||
+    text(details.class) ||
+    text(derived.className)
+  );
+}
+
 export function actorFieldValues(actorData: JsonRecord): Record<string, string> {
   const system = recordAt(actorData, "system");
   const details = recordAt(system, "details");
@@ -435,10 +452,7 @@ export function actorFieldValues(actorData: JsonRecord): Record<string, string> 
     0,
   );
   const level = num(details.level) || num(derivedFlags.level) || classLevels;
-  const className =
-    classItems.map((item) => text(item.name)).join(" / ") ||
-    text(details.class) ||
-    text(derivedFlags.className);
+  const className = actorClassName(actorData);
   const subclassName =
     items
       .filter((item) => item.type === "subclass")

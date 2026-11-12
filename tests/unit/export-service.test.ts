@@ -4,6 +4,7 @@ import { PDFDocument } from "pdf-lib";
 import { describe, expect, it } from "vitest";
 import {
   exportActorJson,
+  actorPdfFilename,
   exportActorsJsonZip,
   exportActorPdf,
   pdfTemplateFieldNames,
@@ -77,6 +78,32 @@ function actor(): FoundryActor {
 }
 
 describe("exportService", () => {
+  it("names PDFs using the character, actual class, and local generation date", () => {
+    expect(actorPdfFilename(actor(), new Date(2026, 10, 12, 23, 45))).toBe(
+      "Synthetic Hero-Wizard-2026-11-12.pdf",
+    );
+    const base = actor();
+    const modified: FoundryActor = {
+      ...base,
+      name: "Tim (Shuffled 4)",
+      toObject: () => ({
+        ...base.toObject(),
+        items: [
+          { type: "class", name: "Cleric" },
+          { type: "class", name: "Wizard" },
+        ],
+      }),
+    };
+    expect(actorPdfFilename(modified, new Date(2026, 0, 2))).toBe(
+      "Tim (Shuffled 4)-Cleric _ Wizard-2026-01-02.pdf",
+    );
+    expect(() => actorPdfFilename({
+      ...base,
+      toObject: () => ({ system: {}, items: [] }),
+    })).toThrow(/character name, class, or generation date/);
+    expect(() => actorPdfFilename(base, new Date(NaN))).toThrow(/generation date/);
+  });
+
   it("exports valid native Actor JSON", async () => {
     const json = await exportActorJson(actor());
     expect(JSON.parse(json)).toMatchObject({

@@ -3,6 +3,7 @@ import { PDFDocument, StandardFonts } from "pdf-lib";
 import type { PDFFont, PDFTextField } from "pdf-lib";
 import {
   PDF_FIELD_NAMES,
+  actorClassName,
   actorFieldValues,
   wrapLineCount,
 } from "./sheet-values.js";
@@ -14,6 +15,24 @@ export class ExportFailure extends Error {
     super(message);
     this.name = "ExportFailure";
   }
+}
+
+export function actorPdfFilename(actor: FoundryActor, date: Date = new Date()): string {
+  const className = actorClassName(actor.toObject(false));
+  if (!className.trim() || !actor.name.trim() || !Number.isFinite(date.getTime())) {
+    throw new ExportFailure("Cannot name the PDF: the character name, class, or generation date is missing.");
+  }
+  const safePart = (value: string): string =>
+    value.replace(/[<>:"/\\|?*\u0000-\u001f]/g, "_").replace(/[. ]+$/g, "").trim();
+  const name = safePart(actor.name);
+  const characterClass = safePart(className);
+  if (!name || !characterClass) {
+    throw new ExportFailure("Cannot name the PDF: the character name or class is invalid.");
+  }
+  const year = String(date.getFullYear()).padStart(4, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${name}-${characterClass}-${year}-${month}-${day}.pdf`;
 }
 
 function isRecord(value: unknown): value is JsonRecord {

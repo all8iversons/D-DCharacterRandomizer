@@ -1,17 +1,8 @@
-import { exportActorPdf } from "../export/export-service.js";
+import { actorPdfFilename, exportActorPdf } from "../export/export-service.js";
 
 const OWNERSHIP_NONE = 0;
 const OWNERSHIP_OBSERVER = 2;
 const FOLDER_NAME = "Shuffled Characters";
-
-function safeFileName(value: string): string {
-  return (
-    value
-      .replace(/[^A-Za-z0-9._-]+/g, "_")
-      .replace(/^_+|_+$/g, "")
-      .slice(0, 60) || "character"
-  );
-}
 
 async function ensureDirectory(path: string): Promise<void> {
   const picker = foundry.applications.apps.FilePicker.implementation;
@@ -36,12 +27,20 @@ export async function createPdfHandout(
   userId: string,
 ): Promise<FoundryJournalEntry> {
   const pdf = await exportActorPdf(actor);
-  const directory = `worlds/${game.world.id}/shuffled-characters`;
-  await ensureDirectory(directory);
+  const fileName = actorPdfFilename(actor);
+  const parentDirectory = `worlds/${game.world.id}/shuffled-characters`;
+  await ensureDirectory(parentDirectory);
+  const identifier = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+  const directory = `${parentDirectory}/${identifier}`;
+  await foundry.applications.apps.FilePicker.implementation.createDirectory(
+    "data",
+    directory,
+  );
 
   const buffer = new ArrayBuffer(pdf.byteLength);
   new Uint8Array(buffer).set(pdf);
-  const fileName = `${safeFileName(actor.name)}-${actor.id}.pdf`;
   const file = new File([buffer], fileName, { type: "application/pdf" });
   const response = await foundry.applications.apps.FilePicker.implementation.upload(
     "data",

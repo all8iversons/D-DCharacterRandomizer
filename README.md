@@ -15,6 +15,10 @@ D&D 5e system, and preflights the full batch before creating new Actors in the
 fillable PDF or Foundry JSON, and all Actors can be downloaded together as a
 ZIP containing individual JSON files.
 
+PDF downloads and handout files are named
+`CharacterName-Class-YYYY-MM-DD.pdf`, using the local date the PDF is generated.
+The generated Actor's full name, including any shuffle suffix, is preserved.
+
 In the shuffle preview, use **Swap Slices** to exchange a category between two
 hybrids. Each slice remains in the batch exactly once. Manual swaps can reduce
 mixing or reunite a character with their spell list; review the warnings before

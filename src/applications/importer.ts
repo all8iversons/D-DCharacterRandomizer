@@ -5,6 +5,7 @@ import {
 } from "../foundry/actor-generator.js";
 import {
   downloadFile,
+  actorPdfFilename,
   exportActorJson,
   exportActorsJsonZip,
   exportActorPdf,
@@ -327,7 +328,7 @@ export class DdbImporterApplication extends HandlebarsApplication {
     }
     try {
       const pdf = await exportActorPdf(actor);
-      downloadFile(`${actor.name}.pdf`, pdf, "application/pdf");
+      downloadFile(actorPdfFilename(actor), pdf, "application/pdf");
       this.errorMessage = "";
       this.statusMessage = `Downloaded the fillable 5e PDF for ${actor.name}.`;
     } catch (error) {
