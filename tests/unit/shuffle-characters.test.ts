@@ -40,6 +40,8 @@ describe("shuffleCharacters", () => {
       for (const [category, origin] of Object.entries(resultCharacter.origins)) {
         const targetIndex = result.indexOf(resultCharacter);
         expect(origin.sourceIndex).not.toBe(targetIndex);
+        expect(origin.sourceCharacterId).toBe(source[origin.sourceIndex]?.sourceCharacterId);
+        expect(origin.sourceCharacterName).toBe(source[origin.sourceIndex]?.name);
         expect(
           resultCharacter.slices[category as keyof ImportedCharacter["slices"]],
         ).toEqual(source[origin.sourceIndex]?.slices[
@@ -55,6 +57,21 @@ describe("shuffleCharacters", () => {
       );
       expect(new Set(origins).size).toBe(source.length);
       expect(origins.every((origin, index) => origin !== index)).toBe(true);
+    }
+  });
+
+  it("uses source names for every slice in the preview template", () => {
+    const template = readFileSync(
+      new URL("../../templates/importer.hbs", import.meta.url),
+      "utf8",
+    );
+    for (const category of Object.keys(characters()[0]!.slices)) {
+      expect(template).toContain(
+        `{{character.origins.${category}.sourceCharacterName}}`,
+      );
+      expect(template).not.toContain(
+        `{{character.origins.${category}.sourceCharacterId}}`,
+      );
     }
   });
 

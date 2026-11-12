@@ -4,6 +4,7 @@ export type SliceCategory = keyof CharacterSlices;
 
 export interface SliceOrigin {
   sourceCharacterId: string;
+  sourceCharacterName: string;
   sourceIndex: number;
 }
 

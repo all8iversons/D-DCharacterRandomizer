@@ -30,16 +30,16 @@
   {{#if hasShufflePreview}}
     <section class="shuffle-preview">
       <h3>Shuffle Preview ({{shuffledPreview.length}} hybrids)</h3>
-      <p>Each of the six slices comes from a different source character. Review this preview before creating new Actors.</p>
+      <p>Review the source of each slice before creating new Actors.</p>
       {{#each shuffledPreview as |character|}}
         <details>
           <summary>{{character.name}} — {{character.slices.classProgression.className}} level {{character.slices.classProgression.totalLevel}}</summary>
-          <p>Identity: source {{character.origins.identityBackground.sourceCharacterId}}</p>
-          <p>Class: source {{character.origins.classProgression.sourceCharacterId}}</p>
-          <p>Ability scores: source {{character.origins.coreAbilityScores.sourceCharacterId}}</p>
-          <p>Proficiencies and feats: source {{character.origins.proficienciesAndFeats.sourceCharacterId}}</p>
-          <p>Equipment: source {{character.origins.equipmentAndGold.sourceCharacterId}}</p>
-          <p>Spellcasting: source {{character.origins.spellcasting.sourceCharacterId}}</p>
+          <p>Identity: source {{character.origins.identityBackground.sourceCharacterName}}</p>
+          <p>Class: source {{character.origins.classProgression.sourceCharacterName}}</p>
+          <p>Ability scores: source {{character.origins.coreAbilityScores.sourceCharacterName}}</p>
+          <p>Proficiencies and feats: source {{character.origins.proficienciesAndFeats.sourceCharacterName}}</p>
+          <p>Equipment: source {{character.origins.equipmentAndGold.sourceCharacterName}}</p>
+          <p>Spellcasting: source {{character.origins.spellcasting.sourceCharacterName}}</p>
         </details>
       {{/each}}
       <button type="button" data-action="shuffle-preview" {{#if importing}}disabled{{/if}}>

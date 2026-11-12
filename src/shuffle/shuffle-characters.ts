@@ -124,7 +124,11 @@ export function shuffleCharacters(
       if (sourceIndex === undefined) {
         throw new Error("Unable to resolve a shuffled character origin.");
       }
-      return { sourceCharacterId: source.sourceCharacterId, sourceIndex };
+      return {
+        sourceCharacterId: source.sourceCharacterId,
+        sourceCharacterName: source.name,
+        sourceIndex,
+      };
     };
     const identity = sourceAt("identityBackground");
     const result: ShuffledCharacter = {
