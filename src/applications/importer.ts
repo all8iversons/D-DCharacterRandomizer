@@ -45,6 +45,7 @@ export class DdbImporterApplication extends HandlebarsApplication {
     actions: {
       "import-character": DdbImporterApplication.prototype.importCharacter,
       "import-campaign": DdbImporterApplication.prototype.importCampaign,
+      "remove-character": DdbImporterApplication.prototype.removeCharacter,
       "shuffle-preview": DdbImporterApplication.prototype.createShufflePreview,
       "swap-slices": DdbImporterApplication.prototype.swapPreviewSlices,
       "create-actors": DdbImporterApplication.prototype.createActors,
@@ -66,6 +67,7 @@ export class DdbImporterApplication extends HandlebarsApplication {
   private errorMessage = "";
   private statusMessage = "";
   private shuffledPreview: readonly ShuffledCharacter[] = [];
+  private previewRevision: number | null = null;
   private hasManualSwaps = false;
   private generatedActors: readonly FoundryActor[] = [];
   private generationWarnings: readonly string[] = [];
@@ -74,11 +76,13 @@ export class DdbImporterApplication extends HandlebarsApplication {
     options: Record<string, unknown>,
   ): Promise<Record<string, unknown>> {
     const context = await super._prepareContext(options);
+    this.clearStalePreview();
     const characters: readonly ImportedCharacter[] = importService.characters;
     return {
       ...context,
       characters,
       characterCount: characters.length,
+      rosterRevision: importService.revision,
       canShuffle: importService.canShuffle,
       shuffledPreview: this.shuffledPreview.map((character, index) => ({
         ...character,
@@ -122,7 +126,8 @@ export class DdbImporterApplication extends HandlebarsApplication {
     this.render({ force: true });
     try {
       const character = await importService.importCharacter(input.value);
-      this.statusMessage = `Imported ${character.name}.`;
+      const hadPreview = this.clearStalePreview();
+      this.statusMessage = `Imported ${character.name}.${hadPreview ? " The shuffle preview was cleared; shuffle again." : ""}`;
       const missing = character.slices.spellcasting.unresolvedSpells ?? [];
       if (missing.length > 0) {
         this.statusMessage += ` ${missing.length} spell(s) need review because D&D Beyond did not provide their definitions. Expand the character for details.`;
@@ -156,7 +161,11 @@ export class DdbImporterApplication extends HandlebarsApplication {
     this.render({ force: true });
     try {
       const result = await importService.importCampaign(input.value);
+      const hadPreview = this.clearStalePreview();
       const parts = [`Imported ${result.imported.length} character(s) from the campaign.`];
+      if (hadPreview) {
+        parts.push("The shuffle preview was cleared; shuffle again.");
+      }
       if (result.skipped.length > 0) {
         parts.push(`${result.skipped.length} already loaded.`);
       }
@@ -183,11 +192,51 @@ export class DdbImporterApplication extends HandlebarsApplication {
     }
   }
 
+  private clearStalePreview(): boolean {
+    if (this.previewRevision === null || this.previewRevision === importService.revision) {
+      return false;
+    }
+    this.shuffledPreview = [];
+    this.previewRevision = null;
+    this.hasManualSwaps = false;
+    this.statusMessage = "The loaded character list changed; the shuffle preview was cleared. Shuffle again.";
+    return true;
+  }
+
+  private removeCharacter(event: Event, target: HTMLElement): void {
+    event.preventDefault();
+    if (this.importing) {
+      this.errorMessage = "Wait for the current operation to finish before removing a character.";
+      this.render({ force: true });
+      return;
+    }
+    const { characterIndex, characterId, rosterRevision } = target.dataset;
+    if (!characterIndex || !/^\d+$/.test(characterIndex) ||
+        !characterId || !rosterRevision || !/^\d+$/.test(rosterRevision)) {
+      this.errorMessage = "The selected loaded character could not be identified.";
+      this.render({ force: true });
+      return;
+    }
+    try {
+      const removed = importService.removeCharacter(
+        Number(characterIndex), characterId, Number(rosterRevision),
+      );
+      const hadPreview = this.clearStalePreview();
+      this.errorMessage = "";
+      this.statusMessage = `Removed ${removed.name} from the loaded characters.${hadPreview ? " The shuffle preview was cleared; shuffle again." : ""} Existing Actors were not affected.`;
+    } catch (error) {
+      this.errorMessage = this.safeErrorMessage(error);
+      this.statusMessage = "";
+    }
+    this.render({ force: true });
+  }
+
   private createShufflePreview(event: Event): void {
     event.preventDefault();
     try {
       const hadPreview = this.shuffledPreview.length > 0;
       this.shuffledPreview = shuffleCharacters(importService.characters);
+      this.previewRevision = importService.revision;
       this.hasManualSwaps = false;
       this.errorMessage = "";
       this.statusMessage = `${hadPreview ? "Reshuffled:" : "Created"} a ${this.shuffledPreview.length}-character shuffle preview. Review the assignments before creating Actors.`;
@@ -200,6 +249,10 @@ export class DdbImporterApplication extends HandlebarsApplication {
 
   private swapPreviewSlices(event: Event, target: HTMLElement): void {
     event.preventDefault();
+    if (this.clearStalePreview()) {
+      this.render({ force: true });
+      return;
+    }
     const section = target.closest(".slice-swap");
     const first = section?.querySelector<HTMLSelectElement>("[name='swap-first']")?.value;
     const second = section?.querySelector<HTMLSelectElement>("[name='swap-second']")?.value;
@@ -233,6 +286,10 @@ export class DdbImporterApplication extends HandlebarsApplication {
 
   private async createActors(event: Event): Promise<void> {
     event.preventDefault();
+    if (this.clearStalePreview()) {
+      this.render({ force: true });
+      return;
+    }
     if (this.shuffledPreview.length < 2) {
       this.errorMessage = "Create a shuffle preview with at least two characters first.";
       this.render({ force: true });
@@ -250,6 +307,7 @@ export class DdbImporterApplication extends HandlebarsApplication {
       this.generatedActors = [...this.generatedActors, ...batch.actors];
       this.generationWarnings = batch.warnings;
       this.shuffledPreview = [];
+      this.previewRevision = null;
       this.hasManualSwaps = false;
       this.statusMessage = `Created ${batch.actors.length} Actors in the Shuffled Characters folder.`;
       if (batch.warnings.length > 0) {

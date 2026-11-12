@@ -21,6 +21,7 @@ export interface CampaignImportResult {
 
 export class ImportService {
   private loadedCharacters: ImportedCharacter[] = [];
+  private rosterRevision = 0;
 
   constructor(
     private readonly fetchCharacterPayload: CharacterPayloadFetcher =
@@ -37,12 +38,33 @@ export class ImportService {
     return this.loadedCharacters.length >= 2;
   }
 
+  get revision(): number {
+    return this.rosterRevision;
+  }
+
+  removeCharacter(index: number, sourceCharacterId: string, revision: number): ImportedCharacter {
+    const character = this.loadedCharacters[index];
+    if (
+      revision !== this.rosterRevision ||
+      !Number.isInteger(index) ||
+      index < 0 ||
+      !character ||
+      character.sourceCharacterId !== sourceCharacterId
+    ) {
+      throw new RangeError("The loaded character list has changed. Refresh it and try again.");
+    }
+    this.loadedCharacters = this.loadedCharacters.filter((_, position) => position !== index);
+    this.rosterRevision += 1;
+    return structuredClone(character);
+  }
+
   async importCharacter(sourceValue: string): Promise<ImportedCharacter> {
     const parsed = parseResourceId(sourceValue, "character");
     const payload = await this.fetchCharacterPayload(parsed.id);
     const input = normalizeCharacterPayload(payload, parsed.id);
     const character = sliceCharacter(input);
     this.loadedCharacters = [...this.loadedCharacters, character];
+    this.rosterRevision += 1;
     return structuredClone(character);
   }
 

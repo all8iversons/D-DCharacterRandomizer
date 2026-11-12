@@ -25,6 +25,10 @@ hybrids. Each slice remains in the batch exactly once. Manual swaps can reduce
 mixing or reunite a character with their spell list; review the warnings before
 creating Actors. Reshuffling replaces the preview and discards manual swaps.
 
+Expand a loaded character and select **Remove Character** to remove it from the
+importer's temporary list. Changing the list clears any existing shuffle preview
+and manual swaps; previously created Actors and PDFs are not deleted.
+
 If D&D Beyond omits a spell definition, the import retains any available spell
 name or ID and flags it for review. The shuffled Actor and PDF include a
 plain-text review entry instead of guessing its level or mechanics. Consult the

@@ -97,6 +97,9 @@
       {{#each characters as |character|}}
         <details>
           <summary>{{character.name}} (ID {{character.sourceCharacterId}})</summary>
+          <button type="button" data-action="remove-character" data-character-index="{{@index}}" data-character-id="{{character.sourceCharacterId}}" data-roster-revision="{{../rosterRevision}}" {{#if ../importing}}disabled{{/if}} aria-label="Remove {{character.name}} from loaded characters">
+            <i class="fa-solid fa-user-minus"></i> Remove Character
+          </button>
           <h4>Identity &amp; Background</h4>
           <p>{{character.slices.identityBackground.species}} &middot; {{character.slices.identityBackground.background}} &middot; {{character.slices.identityBackground.alignment}}</p>
           <p>{{character.slices.identityBackground.appearance}}</p>

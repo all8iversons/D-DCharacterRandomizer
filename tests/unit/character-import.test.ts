@@ -74,4 +74,24 @@ describe("ImportService", () => {
 
     expect(service.characters[0]?.name).toBe("Sample Character");
   });
+
+  it("removes one selected import, supports duplicates and reimport, and rejects stale selections", async () => {
+    const service = new ImportService(async () => readFixture(), async () => ["12345"]);
+    await service.importCharacter("12345");
+    await service.importCharacter("12345");
+    await service.importCharacter("67890");
+    const revision = service.revision;
+
+    expect(() => service.removeCharacter(0, "67890", revision)).toThrow(RangeError);
+    expect(() => service.removeCharacter(10, "12345", revision)).toThrow(RangeError);
+    expect(service.removeCharacter(1, "12345", revision).sourceCharacterId).toBe("12345");
+    expect(service.characters.map((character) => character.sourceCharacterId)).toEqual(["12345", "67890"]);
+    expect(service.canShuffle).toBe(true);
+    expect(() => service.removeCharacter(0, "12345", revision)).toThrow(/changed/);
+    service.removeCharacter(0, "12345", service.revision);
+    expect(service.canShuffle).toBe(false);
+    const result = await service.importCampaign("111");
+    expect(result.imported.map((character) => character.sourceCharacterId)).toEqual(["12345"]);
+    expect(service.canShuffle).toBe(true);
+  });
 });
