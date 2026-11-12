@@ -26,8 +26,9 @@ export async function createPdfHandout(
   actor: FoundryActor,
   userId: string,
 ): Promise<FoundryJournalEntry> {
-  const pdf = await exportActorPdf(actor);
-  const fileName = actorPdfFilename(actor);
+  const generatedAt = new Date();
+  const fileName = actorPdfFilename(actor, generatedAt);
+  const pdf = await exportActorPdf(actor, undefined, generatedAt);
   const parentDirectory = `worlds/${game.world.id}/shuffled-characters`;
   await ensureDirectory(parentDirectory);
   const identifier = Array.from(crypto.getRandomValues(new Uint8Array(16)))

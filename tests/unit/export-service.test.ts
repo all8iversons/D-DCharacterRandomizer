@@ -141,11 +141,13 @@ describe("exportService", () => {
     const template = new Uint8Array(
       readFileSync("assets/character-sheet-template.pdf"),
     );
-    const result = await exportActorPdf(actor(), template);
+    const result = await exportActorPdf(actor(), template, new Date(2026, 10, 12));
     const pdf = await PDFDocument.load(result);
     const form = pdf.getForm();
 
     expect(pdf.getPageCount()).toBe(6);
+    expect(pdf.getTitle()).toBe("Synthetic Hero-Wizard-2026-11-12");
+    expect(pdf.catalog.getViewerPreferences()?.getDisplayDocTitle()).toBe(true);
     expect(form.getTextField("identity.name").getText()).toBe("Synthetic Hero");
     expect(form.getTextField("stats.hp").getText()).toBe("33");
     expect(form.getTextField("identity.appearance").getText()).toBe(

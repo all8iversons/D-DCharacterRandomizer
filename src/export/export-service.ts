@@ -97,7 +97,9 @@ function fitFontSize(field: PDFTextField, value: string, font: PDFFont): void {
 export async function exportActorPdf(
   actor: FoundryActor,
   template?: Uint8Array,
+  generatedAt: Date = new Date(),
 ): Promise<Uint8Array> {
+  const filename = actorPdfFilename(actor, generatedAt);
   const source =
     template ??
     (await (async () => {
@@ -112,6 +114,8 @@ export async function exportActorPdf(
       return new Uint8Array(await response.arrayBuffer());
     })());
   const pdf = await PDFDocument.load(source);
+  pdf.setTitle(filename.slice(0, -4));
+  pdf.catalog.getOrCreateViewerPreferences().setDisplayDocTitle(true);
   const form = pdf.getForm();
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const values = actorFieldValues(actor.toObject(false));

@@ -18,6 +18,7 @@ ZIP containing individual JSON files.
 PDF downloads and handout files are named
 `CharacterName-Class-YYYY-MM-DD.pdf`, using the local date the PDF is generated.
 The generated Actor's full name, including any shuffle suffix, is preserved.
+The same name is embedded as the PDF document title for browser print dialogs.
 
 In the shuffle preview, use **Swap Slices** to exchange a category between two
 hybrids. Each slice remains in the batch exactly once. Manual swaps can reduce

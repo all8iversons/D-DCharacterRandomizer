@@ -327,8 +327,10 @@ export class DdbImporterApplication extends HandlebarsApplication {
       return;
     }
     try {
-      const pdf = await exportActorPdf(actor);
-      downloadFile(actorPdfFilename(actor), pdf, "application/pdf");
+      const generatedAt = new Date();
+      const filename = actorPdfFilename(actor, generatedAt);
+      const pdf = await exportActorPdf(actor, undefined, generatedAt);
+      downloadFile(filename, pdf, "application/pdf");
       this.errorMessage = "";
       this.statusMessage = `Downloaded the fillable 5e PDF for ${actor.name}.`;
     } catch (error) {
