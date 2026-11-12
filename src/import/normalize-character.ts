@@ -911,6 +911,7 @@ function readSpells(
   const cantrips: SpellEntry[] = [];
   const knownSpells: SpellEntry[] = [];
   const preparedSpells: SpellEntry[] = [];
+  const unresolvedSpells: { name: string; source: string }[] = [];
 
   const classSpellGroups = optionalArray(
     data.classSpells,
@@ -927,30 +928,39 @@ function readSpells(
       "D&D Beyond returned malformed spell data.",
     ),
   );
-  const spellSources: unknown[] = [
-    ...["background", "class", "feat", "item", "race"].flatMap((group) =>
-      optionalArray(
-        spells?.[group],
-        sourceCharacterId,
-        "D&D Beyond returned malformed spell data.",
-      ),
+  const spellSources: { source: string; entries: readonly unknown[] }[] = [
+    ...["background", "class", "feat", "item", "race"].map((group) =>
+      ({
+        source: group,
+        entries: optionalArray(
+          spells?.[group],
+          sourceCharacterId,
+          "D&D Beyond returned malformed spell data.",
+        ),
+      }),
     ),
-    ...classSpellGroups,
+    { source: "classSpells", entries: classSpellGroups },
   ];
   const seenSpells = new Set<string>();
 
-  {
-    for (const rawSpell of spellSources) {
+  for (const { source, entries } of spellSources) {
+    for (const [index, rawSpell] of entries.entries()) {
       const spell = requiredRecord(
         rawSpell,
         sourceCharacterId,
         "D&D Beyond returned malformed spell data.",
       );
-      const definition = requiredRecord(
-        spell.definition,
-        sourceCharacterId,
-        "D&D Beyond returned a spell without a definition.",
-      );
+      const definition = optionalRecord(spell.definition);
+      if (!definition) {
+        const nested = optionalRecord(spell.spell);
+        const name = looseText(spell.name) || looseText(nested?.name);
+        const id = optionalId(spell.id);
+        unresolvedSpells.push({
+          name: name || `Unidentified spell${id ? ` (ID ${id})` : ""}`,
+          source: `${source} entry ${index + 1}`,
+        });
+        continue;
+      }
       const level = numericValue(
         definition.level,
         sourceCharacterId,
@@ -1021,7 +1031,7 @@ function readSpells(
     };
   });
 
-  return { cantrips, knownSpells, preparedSpells, spellSlots };
+  return { cantrips, knownSpells, preparedSpells, spellSlots, unresolvedSpells };
 }
 
 export function normalizeCharacterPayload(

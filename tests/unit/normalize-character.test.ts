@@ -143,6 +143,26 @@ describe("normalizeCharacterPayload", () => {
     });
   });
 
+  it("keeps undefined spells for review while preserving normal spells", () => {
+    const payload = readFixture();
+    const data = asRecord(asRecord(payload).data);
+    asRecord(data.spells).feat = [
+      { id: 123, name: "Custom Spell", definition: null },
+      { id: 456 },
+    ];
+    data.classSpells = [{ spells: [{ spell: { name: "Nested Spell" } }] }];
+
+    const character = sliceCharacter(normalizeCharacterPayload(payload, "12345"));
+    expect(character.slices.spellcasting.unresolvedSpells).toEqual([
+      { name: "Custom Spell", source: "feat entry 1" },
+      { name: "Unidentified spell (ID 456)", source: "feat entry 2" },
+      { name: "Nested Spell", source: "classSpells entry 1" },
+    ]);
+    expect(character.slices.spellcasting.knownSpells).toEqual([
+      expect.objectContaining({ name: "Sample Spell", level: 2 }),
+    ]);
+  });
+
   it("rejects incomplete ability scores without exposing payload content", () => {
     const payload = readFixture();
     const root = asRecord(payload);

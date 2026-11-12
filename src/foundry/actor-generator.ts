@@ -396,6 +396,21 @@ async function resolveActorItems(
   for (const spell of uniqueSpells.values()) {
     items.push(await spellItem(spell, warnings));
   }
+  for (const spell of character.slices.spellcasting.unresolvedSpells ?? []) {
+    warnings.push(
+      `${spell.name} (${spell.source}) has no spell definition; it was added as text and needs review.`,
+    );
+    items.push({
+      name: `Spell requiring review: ${spell.name}`,
+      type: "feat",
+      system: {
+        description: {
+          value: "D&D Beyond did not provide a spell definition. Check the original character sheet and add this spell manually.",
+        },
+      },
+      flags: { "d-d-character-randomizer": { customDataOnly: true } },
+    });
+  }
   return items;
 }
 

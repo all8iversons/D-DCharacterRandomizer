@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { PDFDocument } from "pdf-lib";
 import { createShuffledActors } from "../../src/foundry/actor-generator.js";
+import { exportActorPdf, pdfTemplateFieldNames } from "../../src/export/export-service.js";
 import { normalizeCharacterPayload } from "../../src/import/normalize-character.js";
 import { sliceCharacter } from "../../src/import/slice-character.js";
 import type { ImportedCharacter } from "../../src/types/import-model.js";
@@ -143,5 +145,32 @@ describe("createShuffledActors", () => {
     );
     expect(CONFIG.Actor.documentClass.createDocuments).not.toHaveBeenCalled();
     expect(CONFIG.Folder.documentClass.create).not.toHaveBeenCalled();
+  });
+
+  it("carries missing spell definitions through shuffling into the Actor and PDF", async () => {
+    const source = characters();
+    source[0]!.slices.spellcasting.unresolvedSpells = [
+      { name: "Mystery Spell", source: "feat entry 1" },
+    ];
+    const result = await createShuffledActors(source, () => 0.5);
+    expect(result.warnings).toContain(
+      "Mystery Spell (feat entry 1) has no spell definition; it was added as text and needs review.",
+    );
+    const actor = result.actors.find((candidate) =>
+      JSON.stringify(candidate.toObject()).includes("Mystery Spell"),
+    );
+    expect(actor).toBeDefined();
+    const data = actor!.toObject();
+    expect(data.items).toContainEqual(expect.objectContaining({
+      name: "Spell requiring review: Mystery Spell",
+      type: "feat",
+    }));
+    const template = new Uint8Array(readFileSync("assets/character-sheet-template.pdf"));
+    const pdf = await PDFDocument.load(await exportActorPdf(actor!, template));
+    const form = pdf.getForm();
+    const values = pdfTemplateFieldNames().map((name) =>
+      form.getTextField(name).getText() ?? "",
+    );
+    expect(values.join("\n")).toContain("Spell requiring review: Mystery Spell");
   });
 });

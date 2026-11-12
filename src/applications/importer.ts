@@ -103,6 +103,10 @@ export class DdbImporterApplication extends HandlebarsApplication {
     try {
       const character = await importService.importCharacter(input.value);
       this.statusMessage = `Imported ${character.name}.`;
+      const missing = character.slices.spellcasting.unresolvedSpells ?? [];
+      if (missing.length > 0) {
+        this.statusMessage += ` ${missing.length} spell(s) need review because D&D Beyond did not provide their definitions. Expand the character for details.`;
+      }
     } catch (error) {
       this.errorMessage = this.safeErrorMessage(error);
       this.statusMessage = "";
@@ -135,6 +139,14 @@ export class DdbImporterApplication extends HandlebarsApplication {
       const parts = [`Imported ${result.imported.length} character(s) from the campaign.`];
       if (result.skipped.length > 0) {
         parts.push(`${result.skipped.length} already loaded.`);
+      }
+      const unresolved = result.imported.reduce(
+        (count, character) =>
+          count + (character.slices.spellcasting.unresolvedSpells?.length ?? 0),
+        0,
+      );
+      if (unresolved > 0) {
+        parts.push(`${unresolved} spell(s) need review. Expand the affected characters for details.`);
       }
       if (result.failed.length > 0) {
         this.errorMessage = result.failed

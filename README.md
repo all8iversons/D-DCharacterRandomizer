@@ -15,6 +15,11 @@ D&D 5e system, and preflights the full batch before creating new Actors in the
 fillable PDF or Foundry JSON, and all Actors can be downloaded together as a
 ZIP containing individual JSON files.
 
+If D&D Beyond omits a spell definition, the import retains any available spell
+name or ID and flags it for review. The shuffled Actor and PDF include a
+plain-text review entry instead of guessing its level or mechanics. Consult the
+original character sheet and add the spell manually.
+
 The D&D Beyond services are unofficial and undocumented. Campaign import uses
 the community roster endpoint (`/api/campaign/stt/active-short-characters/<id>`)
 through the proxy, then imports each character; it needs the updated proxy and

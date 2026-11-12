@@ -85,6 +85,9 @@
           <p>Cantrips: {{#each character.slices.spellcasting.cantrips as |spell|}}{{spell.name}}{{#unless @last}}, {{/unless}}{{/each}}</p>
           <p>Known spells: {{#each character.slices.spellcasting.knownSpells as |spell|}}{{spell.name}}{{#unless @last}}, {{/unless}}{{/each}}</p>
           <p>Prepared spells: {{#each character.slices.spellcasting.preparedSpells as |spell|}}{{spell.name}}{{#unless @last}}, {{/unless}}{{/each}}</p>
+          {{#if character.slices.spellcasting.unresolvedSpells.length}}
+            <p>Spells needing review (D&amp;D Beyond did not provide their definitions): {{#each character.slices.spellcasting.unresolvedSpells as |spell|}}{{spell.name}} ({{spell.source}}){{#unless @last}}, {{/unless}}{{/each}}</p>
+          {{/if}}
           <p>Spell slots: {{#each character.slices.spellcasting.spellSlots as |slot|}}Level {{slot.level}}: {{slot.count}}{{#unless @last}}; {{/unless}}{{/each}}</p>
         </details>
       {{/each}}

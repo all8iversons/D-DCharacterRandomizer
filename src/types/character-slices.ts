@@ -124,6 +124,7 @@ export interface SpellcastingSlice {
   knownSpells: readonly SpellEntry[];
   preparedSpells: readonly SpellEntry[];
   spellSlots: readonly SpellSlotCount[];
+  unresolvedSpells?: readonly { name: string; source: string }[];
 }
 
 export interface CharacterSlices {

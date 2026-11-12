@@ -133,6 +133,7 @@ export function sliceCharacter(input: CharacterSliceInput): ImportedCharacter {
     knownSpells: input.spellcasting?.knownSpells ?? [],
     preparedSpells: input.spellcasting?.preparedSpells ?? [],
     spellSlots: input.spellcasting?.spellSlots ?? [],
+    unresolvedSpells: input.spellcasting?.unresolvedSpells ?? [],
   });
 
   const slices: CharacterSlices = {
