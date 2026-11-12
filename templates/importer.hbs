@@ -31,9 +31,48 @@
     <section class="shuffle-preview">
       <h3>Shuffle Preview ({{shuffledPreview.length}} hybrids)</h3>
       <p>Review the source of each slice before creating new Actors.</p>
+      <section class="slice-swap">
+        <h4>Swap slices between hybrids</h4>
+        <p class="hint">A swap exchanges the same slice between two hybrids. Reshuffling discards manual changes.</p>
+        <div class="form-group">
+          <label for="ddb-swap-first">First hybrid</label>
+          <select id="ddb-swap-first" name="swap-first" {{#if importing}}disabled{{/if}}>
+            <option value="">Select a hybrid</option>
+            {{#each previewOptions as |option|}}
+              <option value="{{option.index}}">{{option.label}}</option>
+            {{/each}}
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="ddb-swap-category">Slice</label>
+          <select id="ddb-swap-category" name="swap-category" {{#if importing}}disabled{{/if}}>
+            {{#each sliceOptions as |option|}}
+              <option value="{{option.value}}">{{option.label}}</option>
+            {{/each}}
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="ddb-swap-second">Second hybrid</label>
+          <select id="ddb-swap-second" name="swap-second" {{#if importing}}disabled{{/if}}>
+            <option value="">Select a hybrid</option>
+            {{#each previewOptions as |option|}}
+              <option value="{{option.index}}">{{option.label}}</option>
+            {{/each}}
+          </select>
+        </div>
+        <button type="button" data-action="swap-slices" {{#if importing}}disabled{{/if}}>
+          <i class="fa-solid fa-right-left"></i> Swap Slices
+        </button>
+      </section>
+      {{#if manualWarnings.length}}
+        <section class="notification warning" role="status">
+          <p>Manual swap mixing warnings (you can still create Actors):</p>
+          <ul>{{#each manualWarnings as |warning|}}<li>{{warning}}</li>{{/each}}</ul>
+        </section>
+      {{/if}}
       {{#each shuffledPreview as |character|}}
         <details>
-          <summary>{{character.name}} — {{character.slices.classProgression.className}} level {{character.slices.classProgression.totalLevel}}</summary>
+          <summary>Hybrid {{character.previewNumber}}: {{character.name}} — {{character.slices.classProgression.className}} level {{character.slices.classProgression.totalLevel}}</summary>
           <p>Identity: source {{character.origins.identityBackground.sourceCharacterName}}</p>
           <p>Class: source {{character.origins.classProgression.sourceCharacterName}}</p>
           <p>Ability scores: source {{character.origins.coreAbilityScores.sourceCharacterName}}</p>

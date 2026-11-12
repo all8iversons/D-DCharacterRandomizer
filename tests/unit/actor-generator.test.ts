@@ -1,7 +1,9 @@
 import { readFileSync } from "node:fs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PDFDocument } from "pdf-lib";
-import { createShuffledActors } from "../../src/foundry/actor-generator.js";
+import { createActorsFromShuffle, createShuffledActors } from "../../src/foundry/actor-generator.js";
+import { shuffleCharacters } from "../../src/shuffle/shuffle-characters.js";
+import { swapSlices } from "../../src/shuffle/manual-swaps.js";
 import { exportActorPdf, pdfTemplateFieldNames } from "../../src/export/export-service.js";
 import { normalizeCharacterPayload } from "../../src/import/normalize-character.js";
 import { sliceCharacter } from "../../src/import/slice-character.js";
@@ -145,6 +147,26 @@ describe("createShuffledActors", () => {
     );
     expect(CONFIG.Actor.documentClass.createDocuments).not.toHaveBeenCalled();
     expect(CONFIG.Folder.documentClass.create).not.toHaveBeenCalled();
+  });
+
+  it("creates Actors from the manually swapped preview", async () => {
+    const source = characters();
+    source[0]!.slices.coreAbilityScores.strength = 8;
+    source[1]!.slices.coreAbilityScores.strength = 17;
+    const original = shuffleCharacters(source, () => 0.5);
+    const swapped = swapSlices(original, 0, 1, "coreAbilityScores");
+    const result = await createActorsFromShuffle(swapped);
+    const data = result.actors.map((actor) => actor.toObject());
+    for (const [index, actor] of data.entries()) {
+      expect(actor.system).toMatchObject({
+        abilities: { str: { value: swapped[index]!.slices.coreAbilityScores.strength } },
+      });
+      expect(actor.flags).toMatchObject({
+        "d-d-character-randomizer": {
+          componentOrigins: { coreAbilityScores: swapped[index]!.origins.coreAbilityScores },
+        },
+      });
+    }
   });
 
   it("carries missing spell definitions through shuffling into the Actor and PDF", async () => {

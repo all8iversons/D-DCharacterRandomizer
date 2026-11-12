@@ -12,6 +12,12 @@ import {
 } from "../export/export-service.js";
 import { importService } from "../import/import-service.js";
 import { shuffleCharacters } from "../shuffle/shuffle-characters.js";
+import {
+  isSliceCategory,
+  manualShuffleWarnings,
+  SLICE_OPTIONS,
+  swapSlices,
+} from "../shuffle/manual-swaps.js";
 import type { ShuffledCharacter } from "../types/shuffle-model.js";
 import type { ImportedCharacter } from "../types/import-model.js";
 import { RulesResolutionError } from "../rules/recalculate-stats.js";
@@ -39,6 +45,7 @@ export class DdbImporterApplication extends HandlebarsApplication {
       "import-character": DdbImporterApplication.prototype.importCharacter,
       "import-campaign": DdbImporterApplication.prototype.importCampaign,
       "shuffle-preview": DdbImporterApplication.prototype.createShufflePreview,
+      "swap-slices": DdbImporterApplication.prototype.swapPreviewSlices,
       "create-actors": DdbImporterApplication.prototype.createActors,
       "export-json": DdbImporterApplication.prototype.exportJson,
       "export-json-batch": DdbImporterApplication.prototype.exportJsonBatch,
@@ -58,6 +65,7 @@ export class DdbImporterApplication extends HandlebarsApplication {
   private errorMessage = "";
   private statusMessage = "";
   private shuffledPreview: readonly ShuffledCharacter[] = [];
+  private hasManualSwaps = false;
   private generatedActors: readonly FoundryActor[] = [];
   private generationWarnings: readonly string[] = [];
 
@@ -71,8 +79,19 @@ export class DdbImporterApplication extends HandlebarsApplication {
       characters,
       characterCount: characters.length,
       canShuffle: importService.canShuffle,
-      shuffledPreview: this.shuffledPreview,
+      shuffledPreview: this.shuffledPreview.map((character, index) => ({
+        ...character,
+        previewNumber: index + 1,
+      })),
       hasShufflePreview: this.shuffledPreview.length > 0,
+      previewOptions: this.shuffledPreview.map((character, index) => ({
+        index,
+        label: `Hybrid ${index + 1}: ${character.name}`,
+      })),
+      sliceOptions: SLICE_OPTIONS,
+      manualWarnings: this.hasManualSwaps
+        ? manualShuffleWarnings(this.shuffledPreview)
+        : [],
       generatedActors: this.generatedActors,
       generationWarnings: this.generationWarnings,
       users: assignableUsers(),
@@ -168,8 +187,42 @@ export class DdbImporterApplication extends HandlebarsApplication {
     try {
       const hadPreview = this.shuffledPreview.length > 0;
       this.shuffledPreview = shuffleCharacters(importService.characters);
+      this.hasManualSwaps = false;
       this.errorMessage = "";
       this.statusMessage = `${hadPreview ? "Reshuffled:" : "Created"} a ${this.shuffledPreview.length}-character shuffle preview. Review the assignments before creating Actors.`;
+    } catch (error) {
+      this.errorMessage = this.safeErrorMessage(error);
+      this.statusMessage = "";
+    }
+    this.render({ force: true });
+  }
+
+  private swapPreviewSlices(event: Event, target: HTMLElement): void {
+    event.preventDefault();
+    const section = target.closest(".slice-swap");
+    const first = section?.querySelector<HTMLSelectElement>("[name='swap-first']")?.value;
+    const second = section?.querySelector<HTMLSelectElement>("[name='swap-second']")?.value;
+    const category = section?.querySelector<HTMLSelectElement>("[name='swap-category']")?.value;
+    if (
+      first === undefined || !/^\d+$/.test(first) ||
+      second === undefined || !/^\d+$/.test(second) ||
+      category === undefined || !isSliceCategory(category)
+    ) {
+      this.errorMessage = "Choose two different hybrids and a slice to swap.";
+      this.statusMessage = "";
+      this.render({ force: true });
+      return;
+    }
+    try {
+      this.shuffledPreview = swapSlices(
+        this.shuffledPreview,
+        Number(first),
+        Number(second),
+        category,
+      );
+      this.hasManualSwaps = true;
+      this.errorMessage = "";
+      this.statusMessage = "Slices swapped. Review the updated preview and any mixing warnings.";
     } catch (error) {
       this.errorMessage = this.safeErrorMessage(error);
       this.statusMessage = "";
@@ -196,6 +249,7 @@ export class DdbImporterApplication extends HandlebarsApplication {
       this.generatedActors = [...this.generatedActors, ...batch.actors];
       this.generationWarnings = batch.warnings;
       this.shuffledPreview = [];
+      this.hasManualSwaps = false;
       this.statusMessage = `Created ${batch.actors.length} Actors in the Shuffled Characters folder.`;
       if (batch.warnings.length > 0) {
         this.statusMessage += ` ${batch.warnings.length} item(s) use custom data without compendium mechanics; review them in Foundry.`;

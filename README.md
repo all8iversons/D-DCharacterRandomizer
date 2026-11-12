@@ -15,6 +15,11 @@ D&D 5e system, and preflights the full batch before creating new Actors in the
 fillable PDF or Foundry JSON, and all Actors can be downloaded together as a
 ZIP containing individual JSON files.
 
+In the shuffle preview, use **Swap Slices** to exchange a category between two
+hybrids. Each slice remains in the batch exactly once. Manual swaps can reduce
+mixing or reunite a character with their spell list; review the warnings before
+creating Actors. Reshuffling replaces the preview and discards manual swaps.
+
 If D&D Beyond omits a spell definition, the import retains any available spell
 name or ID and flags it for review. The shuffled Actor and PDF include a
 plain-text review entry instead of guessing its level or mechanics. Consult the
